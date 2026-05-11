@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "WorldCupCards"
 include(":app")
+include(":scanner")

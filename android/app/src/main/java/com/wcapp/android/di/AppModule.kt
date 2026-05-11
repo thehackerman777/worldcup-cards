@@ -10,6 +10,7 @@ import com.wcapp.android.ui.screens.exchange.ExchangeViewModel
 import com.wcapp.android.ui.screens.home.HomeViewModel
 import com.wcapp.android.ui.screens.panini.PaniniViewModel
 import com.wcapp.android.ui.screens.settings.SettingsViewModel
+import com.wcapp.scanner.ui.ScannerViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -31,4 +32,5 @@ val appModule = module {
     factory { ExchangeViewModel(get()) }
     factory { SettingsViewModel(get()) }
     factory { PaniniViewModel(get()) }
+    factory { ScannerViewModel(androidContext()) }
 }

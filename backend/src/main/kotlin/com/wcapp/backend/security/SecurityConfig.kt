@@ -34,6 +34,9 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                     // Health check
                     .requestMatchers(HttpMethod.GET, "/api/v1/health", "/actuator/health").permitAll()
+                    // Sync / Match endpoints (require auth)
+                    // (already handled by .anyRequest().authenticated())
+
                     // Panini public endpoints
                     .requestMatchers(HttpMethod.GET, "/api/v1/panini/user/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/panini/local/**").permitAll()

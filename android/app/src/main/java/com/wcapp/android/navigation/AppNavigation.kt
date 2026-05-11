@@ -20,7 +20,9 @@ import com.wcapp.android.ui.screens.exchange.ExchangeDetailScreen
 import com.wcapp.android.ui.screens.exchange.ExchangesScreen
 import com.wcapp.android.ui.screens.home.HomeScreen
 import com.wcapp.android.ui.screens.panini.PaniniScreen
+import com.wcapp.android.ui.screens.scanner.ScannerScreen
 import com.wcapp.android.ui.screens.settings.SettingsScreen
+import com.wcapp.scanner.ui.ScannerViewModel
 import org.koin.java.KoinJavaComponent
 
 object Routes {
@@ -35,6 +37,7 @@ object Routes {
     const val CREATE_EXCHANGE = "create-exchange/{receiverId}"
     const val SETTINGS = "settings"
     const val PANINI = "panini"
+    const val SCANNER = "scanner"
 
     fun cardDetail(cardId: String) = "card/$cardId"
     fun exchangeDetail(exchangeId: String) = "exchange/$exchangeId"
@@ -81,6 +84,7 @@ fun AppNavigation() {
                 onNavigateToCards = { navController.navigate(Routes.CARDS) },
                 onNavigateToExchanges = { navController.navigate(Routes.EXCHANGES) },
                 onNavigateToPanini = { navController.navigate(Routes.PANINI) },
+                onNavigateToScanner = { navController.navigate(Routes.SCANNER) },
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                 onLogout = {
                     sessionManager.clearSession()
@@ -152,6 +156,14 @@ fun AppNavigation() {
 
         composable(Routes.PANINI) {
             PaniniScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.SCANNER) {
+            val scannerViewModel: ScannerViewModel = KoinJavaComponent.get(ScannerViewModel::class.java)
+            ScannerScreen(
+                viewModel = scannerViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

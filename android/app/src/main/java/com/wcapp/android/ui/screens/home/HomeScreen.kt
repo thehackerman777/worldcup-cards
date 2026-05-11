@@ -20,6 +20,7 @@ fun HomeScreen(
     onNavigateToCards: () -> Unit,
     onNavigateToExchanges: () -> Unit,
     onNavigateToPanini: () -> Unit,
+    onNavigateToScanner: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -156,6 +157,15 @@ fun HomeScreen(
                 title = "Panini Sync",
                 subtitle = "Buscar usuarios y sincronizar álbum Panini",
                 onClick = onNavigateToPanini
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ActionButton(
+                icon = Icons.Default.QrCodeScanner,
+                title = "Overlay Scanner",
+                subtitle = "Escanea cartas con overlay sobre otras apps",
+                onClick = onNavigateToScanner
             )
 
             Spacer(modifier = Modifier.height(32.dp))
