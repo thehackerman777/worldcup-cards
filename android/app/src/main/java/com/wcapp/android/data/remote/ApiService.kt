@@ -86,8 +86,9 @@ class ApiService(
     }
 
     /** Ejecuta un request y mapea errores a ApiResult */
-    private suspend inline fun <reified T> request(
-        crossinline block: suspend () -> T
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun <T> request(
+        block: suspend () -> T
     ): ApiResult<T> {
         return try {
             val data = block()
