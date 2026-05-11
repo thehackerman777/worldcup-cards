@@ -1,22 +1,24 @@
 package com.wcapp.backend.panini.controller
 
-import com.wcapp.backend.panini.dto.PaniniUserResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.time.LocalDateTime
 
 /**
- * Controlador mock que simula la API pública de Panini.
- * Solo activo cuando app.panini.mock-enabled=true (dev/testing).
+ * Simulador de la API pública de Panini para desarrollo.
  *
- * Permite probar el endpoint /external/ sin necesidad de
- * tener acceso a la API real de Panini.
+ * Cuando PANINI_MOCK_ENABLED=true, este endpoint simula
+ * la API que usaría la aplicación oficial de Panini.
  *
- * El backend se llama a sí mismo configurando:
- *   app.panini.external.base-url: http://localhost:8080/api/v1/panini/mock
- *   app.panini.external.enabled: true
+ * NO contiene datos reales ni hardcodeados.
+ * Solo existe como placeholder para pruebas de conectividad.
+ *
+ * Para datos reales:
+ *   - Usuarios sincronizan su colección vía POST /local/sync
+ *   - Luego se consultan vía GET /cloud/{nickname}
+ *   - El conector externo puede apuntar a una API real configurando
+ *     PANINI_EXTERNAL_URL con la URL de la API de Panini
  */
 @RestController
 @RequestMapping("/api/v1/panini/mock")
@@ -25,77 +27,35 @@ class PaniniMockController(
 ) {
     private val log = LoggerFactory.getLogger(PaniniMockController::class.java)
 
-    // Datos mock por nickname (simula la base de datos de Panini)
-    private val mockDatabase = mapOf(
-        "thehackerman777" to MockUserData(
-            duplicates = listOf("FWC-001", "FWC-023", "FWC-145", "FWC-345", "FWC-567", "FWC-678", "FWC-789", "FWC-876"),
-            missing = listOf("FWC-111", "FWC-222", "FWC-444", "FWC-555", "FWC-777", "FWC-888", "FWC-999"),
-            completion = 78
-        ),
-        "elpepe8659" to MockUserData(
-            duplicates = listOf("FWC-012", "FWC-034", "FWC-089", "FWC-156", "FWC-234", "FWC-456"),
-            missing = listOf("FWC-001", "FWC-023", "FWC-145", "FWC-345", "FWC-567"),
-            completion = 65
-        ),
-        "messi_fan" to MockUserData(
-            duplicates = listOf("FWC-001", "FWC-010", "FWC-050", "FWC-100"),
-            missing = listOf("FWC-777", "FWC-888"),
-            completion = 92
-        )
-    )
-
-    /**
-     * Simula: GET /api/v1/panini/mock/users/{nickname}/collection
-     * Misma ruta que usaría la API real de Panini.
-     */
     @GetMapping("/users/{nickname}/collection")
-    fun getMockCollection(@PathVariable nickname: String): ResponseEntity<Any> {
-        if (!mockEnabled) {
-            log.debug("Mock Panini disabled - returning 404")
-            return ResponseEntity.notFound().build()
-        }
+    fun getMockCollection(@PathVariable nickname: String): ResponseEntity<Map<String, Any>> {
+        log.info("📦 MOCK PANINI: consulta para '{}' (mock activo: {})", nickname, mockEnabled)
 
-        val data = mockDatabase[nickname.lowercase()]
-        if (data == null) {
-            log.info("📦 MOCK PANINI: '{}' no encontrado en base mock", nickname)
-            return ResponseEntity.status(404).body(mapOf(
-                "error" to "UserNotFound",
-                "message" to "Nickname '$nickname' not found in Panini database"
-            ))
-        }
-
-        log.info("📦 MOCK PANINI: '{}' → {} repetidas, {} faltantes",
-            nickname, data.duplicates.size, data.missing.size)
-
-        return ResponseEntity.ok(mapOf(
-            "duplicates" to data.duplicates,
-            "missing" to data.missing,
-            "completion" to data.completion
-        ))
-    }
-
-    /**
-     * Health check del mock.
-     */
-    @GetMapping("/health")
-    fun mockHealth(): ResponseEntity<Map<String, Any>> {
         return if (mockEnabled) {
             ResponseEntity.ok(mapOf(
-                "status" to "UP",
-                "service" to "panini-mock",
-                "users" to mockDatabase.size
+                "message" to "Mock Panini activo. No hay datos reales aquí.",
+                "nickname" to nickname,
+                "note" to "Para obtener datos reales, el usuario debe sincronizar su colección via POST /api/v1/panini/local/sync. Luego consultar GET /api/v1/panini/cloud/{nickname}.",
+                "duplicates" to emptyList<String>(),
+                "missing" to emptyList<String>(),
+                "completion" to 0
             ))
         } else {
-            ResponseEntity.ok(mapOf(
-                "status" to "DISABLED",
-                "service" to "panini-mock"
+            ResponseEntity.status(404).body(mapOf(
+                "error" to "MockDisabled",
+                "message" to "Mock Panini desactivado. Configura PANINI_MOCK_ENABLED=true"
             ))
         }
     }
 
-    private data class MockUserData(
-        val duplicates: List<String>,
-        val missing: List<String>,
-        val completion: Int
-    )
+    @GetMapping("/health")
+    fun mockHealth(): ResponseEntity<Map<String, Any>> {
+        return ResponseEntity.ok(mapOf(
+            "status" to if (mockEnabled) "MOCK_ACTIVE" else "DISABLED",
+            "service" to "panini-mock-simulator",
+            "note" to "Este mock NO contiene datos reales de usuarios. Solo para pruebas de conectividad.",
+            "realDataEndpoint" to "GET /api/v1/panini/cloud/{nickname}",
+            "syncEndpoint" to "POST /api/v1/panini/local/sync"
+        ))
+    }
 }
