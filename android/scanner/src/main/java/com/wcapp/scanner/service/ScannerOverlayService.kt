@@ -20,6 +20,7 @@ import androidx.core.app.NotificationCompat
 import com.wcapp.scanner.data.local.ScanDatabase
 import com.wcapp.scanner.data.model.ScannedCard
 import com.wcapp.scanner.ocr.OcrProcessor
+import kotlinx.coroutines.*
 
 /**
  * Overlay service que muestra un botón flotante sobre otras apps.
@@ -34,6 +35,7 @@ class ScannerOverlayService : Service() {
     private var imageReader: ImageReader? = null
     private val ocrProcessor = OcrProcessor()
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     companion object {
         const val NOTIFICATION_ID = 1001
@@ -68,6 +70,7 @@ class ScannerOverlayService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        scope.cancel()
         stopProjection()
         removeOverlayButton()
         super.onDestroy()
@@ -198,7 +201,7 @@ class ScannerOverlayService : Service() {
     }
 
     private fun saveScanResult(card: ScannedCard) {
-        Thread {
+        scope.launch {
             try {
                 val db = ScanDatabase.getInstance(applicationContext)
                 val existing = db.scanDao().getByCardCode(card.cardCode)
@@ -210,7 +213,7 @@ class ScannerOverlayService : Service() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }.start()
+        }
     }
 
     private fun flashFeedback(count: Int) {
