@@ -1,12 +1,10 @@
 name: Build APK
 
-# ── Solo en tags con formato vX.Y.Z ────────
 on:
   push:
     tags:
       - 'v*'
 
-# Permisos para crear releases
 permissions:
   contents: write
 
@@ -44,26 +42,33 @@ jobs:
         id: version
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
+          VCODE=$(grep 'versionCode =' android/app/build.gradle.kts | grep -oP '\d+' | head -1)
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+          echo "build=${VCODE}" >> $GITHUB_OUTPUT
 
-      - name: 📤 Upload APK artifact
+      - name: 📤 Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: worldcup-cards-${{ steps.version.outputs.version }}-debug
+          name: worldcup-cards-${{ steps.version.outputs.version }}+build${{ steps.version.outputs.build }}
           path: android/app/build/outputs/apk/debug/*.apk
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: World Cup Cards ${{ steps.version.outputs.tag }}
+          name: "World Cup Cards v${{ steps.version.outputs.version }}+build${{ steps.version.outputs.build }}"
           tag_name: ${{ steps.version.outputs.tag }}
           files: android/app/build/outputs/apk/debug/*.apk
           body: |
-            # ⚽ World Cup Cards ${{ steps.version.outputs.tag }}
+            # ⚽ World Cup Cards v${{ steps.version.outputs.version }} (build ${{ steps.version.outputs.build }})
 
             APK Debug listo para instalar.
 
             ## 🔧 Configuración
             Settings → Servidor: `http://18.213.174.229:8080`
+
+            ## 📋 Detalles del build
+            - Versión: ${{ steps.version.outputs.version }}
+            - Build: ${{ steps.version.outputs.build }}
+            - Tag: ${{ steps.version.outputs.tag }}
           generate_release_notes: false

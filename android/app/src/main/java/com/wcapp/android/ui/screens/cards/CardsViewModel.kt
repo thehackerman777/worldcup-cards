@@ -33,14 +33,22 @@ class CardsViewModel(
     fun loadCards(page: Int = 0, team: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, selectedTeam = team)
-            apiService.getCards(page = page, team = team).onSuccess {
+            val cardResult = apiService.getCards(page = page, team = team)
+            when (cardResult) {
+                is com.wcapp.android.data.remote.ApiResult.Success -> {
+                    val response = cardResult.data
                 _uiState.value = _uiState.value.copy(
                     cards = if (page == 0) response.cards else _uiState.value.cards + response.cards,
                     currentPage = response.currentPage,
                     totalPages = response.totalPages,
                     isLoading = false
                 )
-            }.onFailure { e ->
+            }
+                is com.wcapp.android.data.remote.ApiResult.Error -> {
+                    val e = it
+                    _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
+                }
+            }
                 _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
             }
         }

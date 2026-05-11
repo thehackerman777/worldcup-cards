@@ -32,7 +32,10 @@ class ExchangeViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            apiService.getExchanges().onSuccess {
+            val exchangeResult = apiService.getExchanges()
+            when (exchangeResult) {
+                is com.wcapp.android.data.remote.ApiResult.Success -> {
+                    val response = exchangeResult.data
                 _uiState.value = _uiState.value.copy(myExchanges = response.exchanges)
             }
 
