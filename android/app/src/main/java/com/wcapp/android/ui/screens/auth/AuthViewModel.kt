@@ -12,7 +12,8 @@ import kotlinx.coroutines.launch
 data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val detail: String? = null  // Debug info
 )
 
 class AuthViewModel(
@@ -25,25 +26,39 @@ class AuthViewModel(
 
     fun login(username: String, password: String) {
         viewModelScope.launch {
+            // Clear any previous error, set loading
             _uiState.value = AuthUiState(isLoading = true)
-            val result = apiService.login(username, password)
 
-            result.onSuccess { response ->
-                if (response.token.isNotBlank() && response.user != null) {
-                    sessionManager.saveSession(
-                        token = response.token,
-                        refreshToken = response.refreshToken,
-                        userId = response.user.id,
-                        username = response.user.username,
-                        email = response.user.email,
-                        displayName = response.user.displayName
-                    )
-                    _uiState.value = AuthUiState(isSuccess = true)
-                } else {
-                    _uiState.value = AuthUiState(error = "Error al iniciar sesión")
+            try {
+                val result = apiService.login(username, password)
+
+                result.onSuccess { response ->
+                    if (response.token.isNotBlank() && response.user != null) {
+                        sessionManager.saveSession(
+                            token = response.token,
+                            refreshToken = response.refreshToken,
+                            userId = response.user.id,
+                            username = response.user.username,
+                            email = response.user.email,
+                            displayName = response.user.displayName
+                        )
+                        _uiState.value = AuthUiState(isSuccess = true)
+                    } else {
+                        _uiState.value = AuthUiState(
+                            error = "Respuesta inválida del servidor",
+                            detail = "token=${response.token.take(10)}... user=${response.user != null}"
+                        )
+                    }
+                }.onFailure { e ->
+                    val msg = e.message ?: "Error de conexión (sin detalle)"
+                    val detail = "${e::class.simpleName}: ${e.message}"
+                    _uiState.value = AuthUiState(error = msg, detail = detail)
                 }
-            }.onFailure { e ->
-                _uiState.value = AuthUiState(error = e.message ?: "Error de conexión")
+            } catch (e: Exception) {
+                _uiState.value = AuthUiState(
+                    error = "Error inesperado: ${e.message?.take(50) ?: "desconocido"}",
+                    detail = "${e::class.simpleName}: ${e.message}"
+                )
             }
         }
     }
@@ -51,24 +66,38 @@ class AuthViewModel(
     fun register(username: String, email: String, password: String, displayName: String?) {
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
-            val result = apiService.register(username, email, password, displayName)
 
-            result.onSuccess { response ->
-                if (response.token.isNotBlank() && response.user != null) {
-                    sessionManager.saveSession(
-                        token = response.token,
-                        refreshToken = response.refreshToken,
-                        userId = response.user.id,
-                        username = response.user.username,
-                        email = response.user.email,
-                        displayName = response.user.displayName
+            try {
+                val result = apiService.register(username, email, password, displayName)
+
+                result.onSuccess { response ->
+                    if (response.token.isNotBlank() && response.user != null) {
+                        sessionManager.saveSession(
+                            token = response.token,
+                            refreshToken = response.refreshToken,
+                            userId = response.user.id,
+                            username = response.user.username,
+                            email = response.user.email,
+                            displayName = response.user.displayName
+                        )
+                        _uiState.value = AuthUiState(isSuccess = true)
+                    } else {
+                        _uiState.value = AuthUiState(
+                            error = "Respuesta inválida del servidor",
+                            detail = "token=${response.token.take(10)}... user=${response.user != null}"
+                        )
+                    }
+                }.onFailure { e ->
+                    _uiState.value = AuthUiState(
+                        error = e.message ?: "Error de conexión",
+                        detail = "${e::class.simpleName}: ${e.message}"
                     )
-                    _uiState.value = AuthUiState(isSuccess = true)
-                } else {
-                    _uiState.value = AuthUiState(error = "Error al registrarse")
                 }
-            }.onFailure { e ->
-                _uiState.value = AuthUiState(error = e.message ?: "Error de conexión")
+            } catch (e: Exception) {
+                _uiState.value = AuthUiState(
+                    error = "Error inesperado: ${e.message?.take(50) ?: "desconocido"}",
+                    detail = "${e::class.simpleName}: ${e.message}"
+                )
             }
         }
     }

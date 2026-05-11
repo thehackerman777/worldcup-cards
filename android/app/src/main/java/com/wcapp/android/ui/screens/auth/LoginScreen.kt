@@ -157,11 +157,21 @@ fun LoginScreen(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
                 ) {
-                    Text(
-                        text = error,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        uiState.detail?.let { detail ->
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = detail,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -169,7 +179,7 @@ fun LoginScreen(
             // Username
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it; viewModel.clearError() },
+                onValueChange = { username = it },
                 label = { Text("Usuario") },
                 leadingIcon = { Icon(Icons.Default.Person, null) },
                 singleLine = true,
@@ -186,7 +196,7 @@ fun LoginScreen(
             // Password
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it; viewModel.clearError() },
+                onValueChange = { password = it },
                 label = { Text("Contraseña") },
                 leadingIcon = { Icon(Icons.Default.Lock, null) },
                 trailingIcon = {

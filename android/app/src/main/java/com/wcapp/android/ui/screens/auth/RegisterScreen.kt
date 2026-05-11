@@ -81,7 +81,7 @@ fun RegisterScreen(
             // Username
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it; localError = null; viewModel.clearError() },
+                onValueChange = { username = it; localError = null },
                 label = { Text("Usuario *") },
                 leadingIcon = { Icon(Icons.Default.Person, null) },
                 singleLine = true,
