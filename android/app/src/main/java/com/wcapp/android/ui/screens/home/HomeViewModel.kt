@@ -2,10 +2,9 @@ package com.wcapp.android.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.wcapp.android.data.local.SessionManager
 import com.wcapp.android.data.remote.ApiService
+import com.wcapp.android.data.local.SessionManager
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import kotlinx.coroutines.launch
 
@@ -22,43 +21,21 @@ class HomeViewModel(
     private val apiService: ApiService,
     private val sessionManager: SessionManager
 ) : ViewModel() {
-
     private val _uiState = mutableStateOf(HomeUiState())
     val uiState: State<HomeUiState> = _uiState
 
-    init {
-        loadHomeData()
-    }
+    init { loadHomeData() }
 
     fun loadHomeData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val username = sessionManager.sessionState.value.user?.displayName
-                ?: sessionManager.sessionState.value.user?.username
-                ?: ""
-
+            val username = sessionManager.sessionState.value.user?.displayName ?: sessionManager.sessionState.value.user?.username ?: ""
             _uiState.value = _uiState.value.copy(username = username)
-
-            // Load album stats
-            apiService.getAlbum()try {
-                _uiState.value = _uiState.value.copy(
-                    albumCompletion = album.completionPercentage,
-                    repeatedCount = album.repeatedCards
-                )
-            }
-
-            // Load pending exchanges
-            apiService.getExchanges()try {
-                val pending = exchanges.exchanges.count { it.status == "PENDING" }
-                _uiState.value = _uiState.value.copy(pendingExchanges = pending)
-            }
-
+            try { val album = apiService.getAlbum(); _uiState.value = _uiState.value.copy(albumCompletion = album.completionPercentage, repeatedCount = album.repeatedCards) } catch (_: Exception) {}
+            try { val ex = apiService.getExchanges(); _uiState.value = _uiState.value.copy(pendingExchanges = ex.exchanges.count { it.status == "PENDING" }) } catch (_: Exception) {}
             _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
 
-    fun logout() {
-        sessionManager.clearSession()
-    }
+    fun logout() { sessionManager.clearSession() }
 }

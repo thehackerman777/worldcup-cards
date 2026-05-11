@@ -4,9 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.remote.ApiService
 import com.wcapp.android.data.remote.CardResponse
-import com.wcapp.android.data.remote.CardsResponse
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import kotlinx.coroutines.launch
 
@@ -26,21 +24,20 @@ class CardsViewModel(
     private val _uiState = mutableStateOf(CardsUiState())
     val uiState: State<CardsUiState> = _uiState
 
-    init {
-        loadCards()
-    }
+    init { loadCards() }
 
     fun loadCards(page: Int = 0, team: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, selectedTeam = team)
-            apiService.getCards(page = page, team = team)try {
+            try {
+                val response = apiService.getCards(page = page, team = team)
                 _uiState.value = _uiState.value.copy(
                     cards = if (page == 0) response.cards else _uiState.value.cards + response.cards,
                     currentPage = response.currentPage,
                     totalPages = response.totalPages,
                     isLoading = false
                 )
-            }} catch (e: Exception) {
+            } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
             }
         }
