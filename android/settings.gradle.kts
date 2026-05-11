@@ -3,8 +3,13 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-        // JetBrains for Kotlin plugins
-        maven { url = uri("https://storage.googleapis.com/download.kotlin.org/libs") }
+        maven("https://plugins.gradle.org/m2/")
+        maven("https://repo1.maven.org/maven2")
+    }
+    plugins {
+        kotlin("android") version "2.1.0"
+        kotlin("plugin.compose") version "2.1.0"
+        kotlin("plugin.serialization") version "2.1.0"
     }
 }
 

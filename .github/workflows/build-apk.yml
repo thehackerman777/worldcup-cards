@@ -19,17 +19,17 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: ⚙️ Setup Gradle 8.10.2
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.10.2"
-          # No validamos el wrapper JAR (custom-build)
-          validate-wrappers: false
-
       - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
           accept-android-sdk-licenses: true
+
+      - name: ⚙️ Install Gradle
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -O /tmp/gradle.zip
+          sudo unzip -q /tmp/gradle.zip -d /opt/
+          sudo ln -sf /opt/gradle-8.10.2/bin/gradle /usr/local/bin/gradle
+          gradle --version | head -3
 
       - name: 🔨 Build Debug APK
         working-directory: ./android

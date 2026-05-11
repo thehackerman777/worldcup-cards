@@ -46,7 +46,7 @@ object Routes {
 fun AppNavigation() {
     val navController = rememberNavController()
     val sessionManager: SessionManager = KoinJavaComponent.get(SessionManager::class.java)
-    val sessionState = sessionManager.sessionState.collectAsState().value
+    val sessionState by sessionManager.sessionState.collectAsState()
 
     val startDestination = if (sessionState.isLoggedIn) Routes.HOME else Routes.LOGIN
 
