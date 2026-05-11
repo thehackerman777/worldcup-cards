@@ -2,11 +2,10 @@ package com.wcapp.android.ui.screens.album
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.wcapp.android.data.remote.AlbumResponse
 import com.wcapp.android.data.remote.ApiService
+import com.wcapp.android.data.remote.AlbumResponse
 import com.wcapp.android.data.remote.UserCardResponse
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import kotlinx.coroutines.launch
 
@@ -25,17 +24,15 @@ class AlbumViewModel(
     private val _uiState = mutableStateOf(AlbumUiState())
     val uiState: State<AlbumUiState> = _uiState
 
-    init {
-        loadAlbum()
-        loadRepeated()
-    }
+    init { loadAlbum(); loadRepeated() }
 
     fun loadAlbum() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            apiService.getAlbum().onSuccess {
+            try {
+                val album = apiService.getAlbum()
                 _uiState.value = _uiState.value.copy(album = album, isLoading = false)
-            }.onFailure { e ->
+            } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
             }
         }
@@ -43,13 +40,13 @@ class AlbumViewModel(
 
     fun loadRepeated() {
         viewModelScope.launch {
-            apiService.getRepeatedCards().onSuccess {
-                _uiState.value = _uiState.value.copy(repeatedCards = cards)
+            try {
+                _uiState.value = _uiState.value.copy(repeatedCards = apiService.getRepeatedCards())
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message)
             }
         }
     }
 
-    fun selectTab(tab: Int) {
-        _uiState.value = _uiState.value.copy(selectedTab = tab)
-    }
+    fun selectTab(tab: Int) { _uiState.value = _uiState.value.copy(selectedTab = tab) }
 }
