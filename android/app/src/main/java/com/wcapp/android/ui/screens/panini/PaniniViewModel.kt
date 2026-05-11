@@ -3,6 +3,8 @@ package com.wcapp.android.ui.screens.panini
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.remote.ApiService
+import com.wcapp.android.data.remote.onSuccess
+import com.wcapp.android.data.remote.onFailure
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State

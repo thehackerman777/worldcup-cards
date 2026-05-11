@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wcapp.android.data.remote.ApiService
+import com.wcapp.android.data.remote.onSuccess
+import com.wcapp.android.data.remote.onFailure
 import com.wcapp.android.data.remote.CardResponse
 import com.wcapp.android.ui.theme.RarityColors
 import kotlinx.coroutines.launch

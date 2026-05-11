@@ -3,6 +3,8 @@ package com.wcapp.android.ui.screens.cards
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.remote.ApiService
+import com.wcapp.android.data.remote.onSuccess
+import com.wcapp.android.data.remote.onFailure
 import com.wcapp.android.data.remote.CardResponse
 import com.wcapp.android.data.remote.CardsResponse
 import androidx.compose.runtime.mutableStateOf
