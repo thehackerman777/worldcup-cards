@@ -1,6 +1,5 @@
 name: Build APK
 
-# ── Solo se activa al crear tags con formato vX.Y.Z ────
 on:
   create:
     tags:
@@ -20,33 +19,20 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: ⚙️ Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
       - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: 🔨 Build Debug APK
+        working-directory: ./android
         run: |
-          cd android
+          chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
 
       - name: 🔨 Build Release APK
+        working-directory: ./android
         run: |
-          cd android
+          chmod +x gradlew
           ./gradlew :app:assembleRelease --no-daemon
-
-      - name: 📤 Upload Debug APK (artifact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: worldcup-cards-v${{ github.ref_name }}-debug
-          path: android/app/build/outputs/apk/debug/*.apk
-
-      - name: 📤 Upload Release APK (artifact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: worldcup-cards-v${{ github.ref_name }}-release
-          path: android/app/build/outputs/apk/release/*.apk
 
       - name: 🏷️ Extract version info
         id: version
@@ -54,6 +40,18 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: 📤 Upload Debug APK (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldcup-cards-${{ steps.version.outputs.version }}-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: 📤 Upload Release APK (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldcup-cards-${{ steps.version.outputs.version }}-release
+          path: android/app/build/outputs/apk/release/*.apk
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -67,9 +65,14 @@ jobs:
             # ⚽ World Cup Cards ${{ steps.version.outputs.tag }}
 
             ## 📦 Artefactos
-            - `worldcup-cards-${{ steps.version.outputs.version }}-debug.apk` — APK de depuración
-            - `worldcup-cards-${{ steps.version.outputs.version }}-release.apk` — APK de producción
+            - `worldcup-cards-${{ steps.version.outputs.version }}-debug.apk` — APK Debug
+            - `worldcup-cards-${{ steps.version.outputs.version }}-release.apk` — APK Release
 
-            ## ✅ Cambios
-            _Generado desde el tag ${{ steps.version.outputs.tag }}_
+            ## 🚀 Instalación
+            1. Descarga el APK deseado
+            2. Activa "Instalar apps desconocidas" en Android
+            3. Abre el archivo APK
+
+            ## 🔧 Configuración del servidor
+            Abre la app → Settings → Configura la IP/URL del backend (18.213.174.229:8080)
           generate_release_notes: false
