@@ -5,6 +5,7 @@ import com.wcapp.backend.panini.entity.*
 import com.wcapp.backend.panini.repository.PaniniCardRepository
 import com.wcapp.backend.panini.repository.PaniniProfileRepository
 import com.wcapp.backend.panini.repository.PaniniSyncLogRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -16,28 +17,24 @@ class PaniniService(
     private val cardRepository: PaniniCardRepository,
     private val syncLogRepository: PaniniSyncLogRepository
 ) {
+    private val log = LoggerFactory.getLogger(PaniniService::class.java)
+
     companion object {
         const val CACHE_TTL_MINUTES = 15L
     }
 
-    /**
-     * GET /api/panini/user/{nickname}
-     *
-     * Busca un perfil de usuario que haya sido sincronizado previamente.
-     * - Si existe y la caché es válida → retorna datos cacheados
-     * - Si existe pero caché expiró → retorna error de sincronización (no mock)
-     * - Si no existe → error de perfil no encontrado
-     *
-     * NUNCA genera datos mock/simulados.
-     */
     fun getUserByNickname(nickname: String): PaniniUserResponse {
+        log.info("🔍 LOCAL LOOKUP: nickname='{}'", nickname)
+
         val profile = profileRepository.findByNicknameIgnoreCase(nickname)
 
         if (profile == null) {
+            log.warn("❌ Perfil no encontrado en DB local: '{}'", nickname)
             throw UserNotFoundException("Perfil Panini no encontrado: '$nickname'. Debes sincronizar primero desde la app.")
         }
 
         if (!isCacheValid(profile)) {
+            log.warn("⏰ Caché expirada para '{}' (último sync: {})", nickname, profile.lastSync)
             syncLogRepository.save(PaniniSyncLog(
                 nickname = nickname.lowercase(),
                 status = SyncStatus.FAILED,
@@ -45,7 +42,7 @@ class PaniniService(
             ))
             throw SyncExpiredException(
                 "Los datos de '$nickname' expiraron en caché. " +
-                "Usa POST /api/v1/panini/user/sync para resincronizar."
+                "Usa POST /api/v1/panini/local/sync para resincronizar."
             )
         }
 
@@ -53,6 +50,8 @@ class PaniniService(
             .map { it.cardCode }
         val missing = cardRepository.findByProfileIdAndIsMissingTrue(profile.id!!)
             .map { it.cardCode }
+
+        log.info("✅ LOOKUP OK: '{}' | {} repetidas, {} faltantes | desde caché", nickname, duplicates.size, missing.size)
 
         syncLogRepository.save(PaniniSyncLog(
             nickname = nickname.lowercase(),
@@ -73,17 +72,15 @@ class PaniniService(
         )
     }
 
-    /**
-     * POST /api/v1/panini/user/sync
-     *
-     * Recibe datos reales sincronizados desde la app Android.
-     * No consulta APIs externas — la app es quien sincroniza y envía.
-     */
     @Transactional
     fun syncUser(request: PaniniSyncRequest): PaniniSyncResponse {
+        log.info("📥 SYNC: nickname='{}' | {} repetidas, {} faltantes, {}% completado",
+            request.nickname, request.duplicates.size, request.missing.size, request.completion)
+
         var profile = profileRepository.findByNicknameIgnoreCase(request.nickname)
 
         if (profile == null) {
+            log.info("🆕 Creando nuevo perfil para: '{}'", request.nickname)
             profile = PaniniProfile(
                 nickname = request.nickname.lowercase(),
                 displayName = request.nickname,
@@ -92,6 +89,7 @@ class PaniniService(
                 totalCollection = request.totalCollection
             )
         } else {
+            log.info("🔄 Actualizando perfil existente: '{}'", request.nickname)
             profile.completionPercentage = request.completion
             profile.totalCards = request.duplicates.size + request.totalCollection
             profile.totalCollection = request.totalCollection
@@ -102,7 +100,11 @@ class PaniniService(
         profileRepository.save(profile)
 
         // Reemplazar cartas sincronizadas
-        cardRepository.findByProfileId(profile.id!!).forEach { cardRepository.delete(it) }
+        val existing = cardRepository.findByProfileId(profile.id!!)
+        if (existing.isNotEmpty()) {
+            log.info("🗑️ Limpiando {} registros anteriores para '{}'", existing.size, request.nickname)
+            existing.forEach { cardRepository.delete(it) }
+        }
 
         request.duplicates.forEach { code ->
             cardRepository.save(PaniniCard(
@@ -127,6 +129,9 @@ class PaniniService(
         val duplicatesFound = request.duplicates.size
         val missingFound = request.missing.size
 
+        log.info("✅ SYNC OK: '{}' | {} cartas totales, {} repetidas, {} faltantes",
+            request.nickname, totalSynced, duplicatesFound, missingFound)
+
         syncLogRepository.save(PaniniSyncLog(
             nickname = request.nickname.lowercase(),
             status = SyncStatus.SUCCESS,
@@ -145,18 +150,17 @@ class PaniniService(
         )
     }
 
-    /**
-     * GET /api/panini/search?q=texto
-     *
-     * Busca entre los perfiles que ya han sido sincronizados.
-     * Solo muestra usuarios que existen en la base local.
-     */
     fun searchUsers(query: String): PaniniSearchResponse {
+        log.info("🔎 SEARCH: query='{}'", query)
+
         val allProfiles = profileRepository.findByActiveTrue()
         val filtered = allProfiles.filter {
             it.nickname.contains(query, ignoreCase = true) ||
             (it.displayName?.contains(query, ignoreCase = true) ?: false)
         }
+
+        log.info("✅ SEARCH OK: '{}' → {} resultados de {} perfiles totales",
+            query, filtered.size, allProfiles.size)
 
         return PaniniSearchResponse(
             results = filtered.map { profile ->
@@ -172,8 +176,6 @@ class PaniniService(
             total = filtered.size
         )
     }
-
-    // ── Helpers ──────────────────────────────────────────
 
     private fun isCacheValid(profile: PaniniProfile): Boolean {
         return profile.lastSync.isAfter(LocalDateTime.now().minusMinutes(CACHE_TTL_MINUTES))

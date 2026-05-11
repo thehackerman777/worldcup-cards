@@ -68,5 +68,6 @@ logging:
   level:
     root: WARN
     com.wcapp: INFO
+    com.wcapp.backend.panini: DEBUG
 
 spring.jpa.show-sql: false
