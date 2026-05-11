@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
-    val viewModel = KoinJavaComponent.get(SettingsViewModel::class.java)
+    val viewModel: SettingsViewModel = KoinJavaComponent.get(SettingsViewModel::class.java)
     val uiState = viewModel.uiState.value
 
     var editingServerUrl by remember { mutableStateOf(false) }

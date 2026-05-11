@@ -30,7 +30,7 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
-    val viewModel = KoinJavaComponent.get(AuthViewModel::class.java)
+    val viewModel: AuthViewModel = KoinJavaComponent.get(AuthViewModel::class.java)
     val uiState = viewModel.uiState.value
     val focusManager = LocalFocusManager.current
 

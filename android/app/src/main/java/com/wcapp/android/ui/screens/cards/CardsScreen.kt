@@ -23,7 +23,7 @@ fun CardsScreen(
     onNavigateToCardDetail: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val viewModel = KoinJavaComponent.get(CardsViewModel::class.java)
+    val viewModel: CardsViewModel = KoinJavaComponent.get(CardsViewModel::class.java)
     val uiState = viewModel.uiState.value
 
     Scaffold(

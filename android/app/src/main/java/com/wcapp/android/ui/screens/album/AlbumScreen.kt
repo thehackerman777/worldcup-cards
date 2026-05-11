@@ -22,7 +22,7 @@ fun AlbumScreen(
     onNavigateToCardDetail: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val viewModel = KoinJavaComponent.get(AlbumViewModel::class.java)
+    val viewModel: AlbumViewModel = KoinJavaComponent.get(AlbumViewModel::class.java)
     val uiState = viewModel.uiState.value
 
     Scaffold(

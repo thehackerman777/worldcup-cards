@@ -23,7 +23,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit
 ) {
-    val viewModel = KoinJavaComponent.get(HomeViewModel::class.java)
+    val viewModel: HomeViewModel = KoinJavaComponent.get(HomeViewModel::class.java)
     val uiState = viewModel.uiState.value
 
     Scaffold(

@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 fun PaniniScreen(
     onBack: () -> Unit
 ) {
-    val viewModel = KoinJavaComponent.get(PaniniViewModel::class.java)
+    val viewModel: PaniniViewModel = KoinJavaComponent.get(PaniniViewModel::class.java)
     val uiState = viewModel.uiState.value
 
     var searchQuery by remember { mutableStateOf("") }

@@ -21,7 +21,7 @@ fun CardDetailScreen(
     cardId: String,
     onBack: () -> Unit
 ) {
-    val apiService = KoinJavaComponent.get(ApiService::class.java)
+    val apiService: ApiService = KoinJavaComponent.get(ApiService::class.java)
     var card by remember { mutableStateOf<CardResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }

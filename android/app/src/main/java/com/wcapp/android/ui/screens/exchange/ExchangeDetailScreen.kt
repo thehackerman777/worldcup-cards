@@ -23,8 +23,8 @@ fun ExchangeDetailScreen(
     exchangeId: String,
     onBack: () -> Unit
 ) {
-    val apiService = KoinJavaComponent.get(ApiService::class.java)
-    val viewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
+    val apiService: ApiService = KoinJavaComponent.get(ApiService::class.java)
+    val viewModel: ExchangeViewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
     val uiState = viewModel.uiState.value
     val scope = rememberCoroutineScope()
 

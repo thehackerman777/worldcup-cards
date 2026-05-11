@@ -18,7 +18,7 @@ fun CreateExchangeScreen(
     onExchangeCreated: () -> Unit,
     onBack: () -> Unit
 ) {
-    val viewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
+    val viewModel: ExchangeViewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
     val uiState = viewModel.uiState.value
 
     var message by remember { mutableStateOf("") }
