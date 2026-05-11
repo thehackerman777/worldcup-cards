@@ -3,6 +3,8 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        // JetBrains for Kotlin plugins
+        maven { url = uri("https://storage.googleapis.com/download.kotlin.org/libs") }
     }
 }
 

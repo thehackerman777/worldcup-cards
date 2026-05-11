@@ -31,7 +31,7 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(AuthViewModel::class.java)
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState = viewModel.uiState.collectAsState().value
     val focusManager = LocalFocusManager.current
 
     var username by remember { mutableStateOf("") }

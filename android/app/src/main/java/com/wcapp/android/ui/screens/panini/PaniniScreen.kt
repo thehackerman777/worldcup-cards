@@ -20,7 +20,7 @@ fun PaniniScreen(
     onBack: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(PaniniViewModel::class.java)
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState = viewModel.uiState.collectAsState().value
 
     var searchQuery by remember { mutableStateOf("") }
 
