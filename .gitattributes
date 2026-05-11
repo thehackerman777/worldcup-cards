@@ -1,0 +1,13 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Gradle
+gradlew text eol=lf
+*.bat text eol=crlf
+
+# Binary files
+*.apk binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary

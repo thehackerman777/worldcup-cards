@@ -1,0 +1,42 @@
+# 📦 Root ignores
+
+## Gradle
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+
+## OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+## Environment
+.env
+.env.local
+*.env
+
+## Logs
+*.log
+
+## Build outputs
+**/build/
+**/out/
+
+## Android
+/android/local.properties
+/android/app/release/
+*.apk
+*.aab
+
+## Backend
+/backend/.env
+/backend/logs/
+
+## IDE
+.vscode/
+.idea/
+*.iws
+*.ipr

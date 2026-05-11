@@ -1,0 +1,8 @@
+{
+  "server": {
+    "host": "10.0.2.2",
+    "port": "8080",
+    "useHttps": false,
+    "description": "Configuración inicial. Se sobrescribe desde la app al cambiar en Settings."
+  }
+}
