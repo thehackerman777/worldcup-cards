@@ -53,13 +53,13 @@ class ApiService(
     }
 
     // ── Auth ──────────────────────────────────────────────
-    suspend fun login(username: String, password: String): ApiResponse = runCatching {
+    suspend fun login(username: String, password: String): Result<ApiResponse> = runCatching {
         httpClient.post("$baseUrl/api/v1/auth/login") {
             setBody(mapOf("username" to username, "password" to password))
         }.body<ApiResponse>()
     }
 
-    suspend fun register(username: String, email: String, password: String, displayName: String?): ApiResponse = runCatching {
+    suspend fun register(username: String, email: String, password: String, displayName: String?): Result<ApiResponse> = runCatching {
         httpClient.post("$baseUrl/api/v1/auth/register") {
             setBody(
                 mapOf(
@@ -73,7 +73,7 @@ class ApiService(
     }
 
     // ── Cards ─────────────────────────────────────────────
-    suspend fun getCards(page: Int = 0, size: Int = 50, team: String? = null): CardsResponse = runCatching {
+    suspend fun getCards(page: Int = 0, size: Int = 50, team: String? = null): Result<CardsResponse> = runCatching {
         httpClient.get("$baseUrl/api/v1/cards") {
             auth()
             parameter("page", page)
@@ -82,59 +82,59 @@ class ApiService(
         }.body<CardsResponse>()
     }
 
-    suspend fun getCard(id: String): CardResponse = runCatching {
+    suspend fun getCard(id: String): Result<CardResponse> = runCatching {
         httpClient.get("$baseUrl/api/v1/cards/$id") {
             auth()
         }.body<CardResponse>()
     }
 
     // ── Album ─────────────────────────────────────────────
-    suspend fun getAlbum(): AlbumResponse = runCatching {
+    suspend fun getAlbum(): Result<AlbumResponse> = runCatching {
         httpClient.get("$baseUrl/api/v1/album") {
             auth()
         }.body<AlbumResponse>()
     }
 
     // ── Repeated ──────────────────────────────────────────
-    suspend fun getRepeatedCards(): List<UserCardResponse> = runCatching {
+    suspend fun getRepeatedCards(): Result<List<UserCardResponse>> = runCatching {
         httpClient.get("$baseUrl/api/v1/album/repeated") {
             auth()
         }.body<List<UserCardResponse>>()
     }
 
     // ── Exchanges ─────────────────────────────────────────
-    suspend fun getExchanges(): ExchangesResponse = runCatching {
+    suspend fun getExchanges(): Result<ExchangesResponse> = runCatching {
         httpClient.get("$baseUrl/api/v1/exchanges") {
             auth()
         }.body<ExchangesResponse>()
     }
 
-    suspend fun getAvailableExchanges(): ExchangesResponse = runCatching {
+    suspend fun getAvailableExchanges(): Result<ExchangesResponse> = runCatching {
         httpClient.get("$baseUrl/api/v1/exchanges/available") {
             auth()
         }.body<ExchangesResponse>()
     }
 
-    suspend fun createExchange(request: CreateExchangeRequest): ExchangeResponse = runCatching {
+    suspend fun createExchange(request: CreateExchangeRequest): Result<ExchangeResponse> = runCatching {
         httpClient.post("$baseUrl/api/v1/exchanges") {
             auth()
             setBody(request)
         }.body<ExchangeResponse>()
     }
 
-    suspend fun acceptExchange(id: String): ExchangeResponse = runCatching {
+    suspend fun acceptExchange(id: String): Result<ExchangeResponse> = runCatching {
         httpClient.put("$baseUrl/api/v1/exchanges/$id/accept") {
             auth()
         }.body<ExchangeResponse>()
     }
 
-    suspend fun rejectExchange(id: String): ExchangeResponse = runCatching {
+    suspend fun rejectExchange(id: String): Result<ExchangeResponse> = runCatching {
         httpClient.put("$baseUrl/api/v1/exchanges/$id/reject") {
             auth()
         }.body<ExchangeResponse>()
     }
 
-    suspend fun completeExchange(id: String): ExchangeResponse = runCatching {
+    suspend fun completeExchange(id: String): Result<ExchangeResponse> = runCatching {
         httpClient.put("$baseUrl/api/v1/exchanges/$id/complete") {
             auth()
         }.body<ExchangeResponse>()
@@ -143,28 +143,28 @@ class ApiService(
     // ── Panini ────────────────────────────────────────────
 
     /** Buscar perfil en base local sincronizada */
-    suspend fun paniniLocalLookup(nickname: String): PaniniLookupResponse = runCatching {
+    suspend fun paniniLocalLookup(nickname: String): Result<PaniniLookupResponse> = runCatching {
         httpClient.get("$baseUrl/api/v1/panini/local/$nickname") {
             // Public endpoint
         }.body<PaniniLookupResponse>()
     }
 
     /** Buscar perfil directamente en API externa de Panini */
-    suspend fun paniniExternalLookup(nickname: String): PaniniLookupResponse = runCatching {
+    suspend fun paniniExternalLookup(nickname: String): Result<PaniniLookupResponse> = runCatching {
         httpClient.get("$baseUrl/api/v1/panini/external/$nickname") {
             // Public endpoint
         }.body<PaniniLookupResponse>()
     }
 
     /** Buscar usuarios locales */
-    suspend fun paniniSearch(query: String): PaniniSearchRoot = runCatching {
+    suspend fun paniniSearch(query: String): Result<PaniniSearchRoot> = runCatching {
         httpClient.get("$baseUrl/api/v1/panini/local/search") {
             parameter("q", query)
         }.body<PaniniSearchRoot>()
     }
 
     /** Sincronizar coleccion desde la app */
-    suspend fun paniniSync(request: PaniniSyncClientRequest): PaniniSyncClientResponse = runCatching {
+    suspend fun paniniSync(request: PaniniSyncClientRequest): Result<PaniniSyncClientResponse> = runCatching {
         httpClient.post("$baseUrl/api/v1/panini/local/sync") {
             setBody(request)
         }.body<PaniniSyncClientResponse>()
