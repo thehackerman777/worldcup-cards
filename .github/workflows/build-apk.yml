@@ -19,20 +19,21 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: ⚙️ Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
 
       - name: 🔨 Build Debug APK
         working-directory: ./android
-        run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleDebug --no-daemon
+        run: gradle :app:assembleDebug --no-daemon
 
       - name: 🔨 Build Release APK
         working-directory: ./android
-        run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleRelease --no-daemon
+        run: gradle :app:assembleRelease --no-daemon
 
       - name: 🏷️ Extract version info
         id: version
@@ -41,13 +42,13 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=${TAG#v}" >> $GITHUB_OUTPUT
 
-      - name: 📤 Upload Debug APK (artifact)
+      - name: 📤 Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: worldcup-cards-${{ steps.version.outputs.version }}-debug
           path: android/app/build/outputs/apk/debug/*.apk
 
-      - name: 📤 Upload Release APK (artifact)
+      - name: 📤 Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: worldcup-cards-${{ steps.version.outputs.version }}-release
@@ -74,5 +75,5 @@ jobs:
             3. Abre el archivo APK
 
             ## 🔧 Configuración del servidor
-            Abre la app → Settings → Configura la IP/URL del backend (18.213.174.229:8080)
+            Abre la app → Settings → Configura la IP/URL del backend: `http://18.213.174.229:8080`
           generate_release_notes: false
