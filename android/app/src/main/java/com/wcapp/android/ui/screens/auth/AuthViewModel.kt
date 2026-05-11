@@ -3,9 +3,9 @@ package com.wcapp.android.ui.screens.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.local.SessionManager
+import com.wcapp.android.data.remote.ApiResult
 import com.wcapp.android.data.remote.ApiService
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import kotlinx.coroutines.launch
 
@@ -13,7 +13,7 @@ data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isSuccess: Boolean = false,
-    val detail: String? = null  // Debug info
+    val detail: String? = null
 )
 
 class AuthViewModel(
@@ -26,13 +26,11 @@ class AuthViewModel(
 
     fun login(username: String, password: String) {
         viewModelScope.launch {
-            // Clear any previous error, set loading
             _uiState.value = AuthUiState(isLoading = true)
 
-            try {
-                val result = apiService.login(username, password)
-
-                result.onSuccess { response ->
+            when (val result = apiService.login(username, password)) {
+                is ApiResult.Success -> {
+                    val response = result.data
                     if (response.token.isNotBlank() && response.user != null) {
                         sessionManager.saveSession(
                             token = response.token,
@@ -46,19 +44,16 @@ class AuthViewModel(
                     } else {
                         _uiState.value = AuthUiState(
                             error = "Respuesta inválida del servidor",
-                            detail = "token=${response.token.take(10)}... user=${response.user != null}"
+                            detail = "token=${response.token.take(10)}..."
                         )
                     }
-                }.onFailure { e ->
-                    val msg = e.message ?: "Error de conexión (sin detalle)"
-                    val detail = "${e::class.simpleName}: ${e.message}"
-                    _uiState.value = AuthUiState(error = msg, detail = detail)
                 }
-            } catch (e: Exception) {
-                _uiState.value = AuthUiState(
-                    error = "Error inesperado: ${e.message?.take(50) ?: "desconocido"}",
-                    detail = "${e::class.simpleName}: ${e.message}"
-                )
+                is ApiResult.Error -> {
+                    _uiState.value = AuthUiState(
+                        error = result.message,
+                        detail = result.detail
+                    )
+                }
             }
         }
     }
@@ -67,10 +62,9 @@ class AuthViewModel(
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
 
-            try {
-                val result = apiService.register(username, email, password, displayName)
-
-                result.onSuccess { response ->
+            when (val result = apiService.register(username, email, password, displayName)) {
+                is ApiResult.Success -> {
+                    val response = result.data
                     if (response.token.isNotBlank() && response.user != null) {
                         sessionManager.saveSession(
                             token = response.token,
@@ -84,20 +78,16 @@ class AuthViewModel(
                     } else {
                         _uiState.value = AuthUiState(
                             error = "Respuesta inválida del servidor",
-                            detail = "token=${response.token.take(10)}... user=${response.user != null}"
+                            detail = "token=${response.token.take(10)}..."
                         )
                     }
-                }.onFailure { e ->
+                }
+                is ApiResult.Error -> {
                     _uiState.value = AuthUiState(
-                        error = e.message ?: "Error de conexión",
-                        detail = "${e::class.simpleName}: ${e.message}"
+                        error = result.message,
+                        detail = result.detail
                     )
                 }
-            } catch (e: Exception) {
-                _uiState.value = AuthUiState(
-                    error = "Error inesperado: ${e.message?.take(50) ?: "desconocido"}",
-                    detail = "${e::class.simpleName}: ${e.message}"
-                )
             }
         }
     }

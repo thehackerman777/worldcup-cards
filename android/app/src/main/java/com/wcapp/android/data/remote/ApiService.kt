@@ -7,14 +7,42 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 /**
- * Cliente API para comunicación con el backend Spring Boot.
- * Usa la URL configurada desde SecurePrefs (dinámica, no hardcodeada).
+ * Cliente API con tipos concretos (no Result<T>).
+ * Los errores se mapean a ApiError para manejo uniforme.
  */
+
+sealed class ApiResult<out T> {
+    data class Success<T>(val data: T) : ApiResult<T>()
+    data class Error(val code: ErrorCode, val message: String, val detail: String? = null) : ApiResult<Nothing>()
+
+    /** Compatibilidad: .onSuccess {} .onFailure {} */
+    inline fun onSuccess(action: (T) -> Unit): ApiResult<T> {
+        if (this is Success) action(data)
+        return this
+    }
+    inline fun onFailure(action: (Error) -> Unit): ApiResult<T> {
+        if (this is Error) action(this)
+        return this
+    }
+    val isSuccess: Boolean get() = this is Success
+}
+
+enum class ErrorCode {
+    NETWORK,         // Sin conexion / timeout
+    SERVER,          // Error 5xx
+    NOT_FOUND,       // 404
+    UNAUTHORIZED,    // 401
+    VALIDATION,      // 400
+    PARSE_ERROR,     // JSON no se puede leer
+    UNKNOWN
+}
+
 class ApiService(
     private val prefs: SecurePrefs
 ) {
@@ -31,12 +59,12 @@ class ApiService(
         }
         install(Logging) {
             logger = Logger.DEFAULT
-            level = LogLevel.HEADERS
+            level = LogLevel.NONE
         }
         install(HttpTimeout) {
-            requestTimeoutMillis = 30_000
-            connectTimeoutMillis = 10_000
-            socketTimeoutMillis = 30_000
+            requestTimeoutMillis = 15_000
+            connectTimeoutMillis = 8_000
+            socketTimeoutMillis = 15_000
         }
         defaultRequest {
             contentType(ContentType.Application.Json)
@@ -52,28 +80,52 @@ class ApiService(
         }
     }
 
+    /** Ejecuta un request y mapea errores a ApiResult */
+    private suspend inline fun <reified T> request(
+        crossinline block: suspend () -> T
+    ): ApiResult<T> {
+        return try {
+            val data = block()
+            ApiResult.Success(data)
+        } catch (e: ClientRequestException) {
+            val status = e.response.status
+            val body = try { e.response.bodyAsText() } catch (_: Exception) { null }
+            when (status) {
+                HttpStatusCode.Unauthorized -> ApiResult.Error(ErrorCode.UNAUTHORIZED, "Credenciales inválidas", body)
+                HttpStatusCode.NotFound -> ApiResult.Error(ErrorCode.NOT_FOUND, "Recurso no encontrado", body)
+                HttpStatusCode.BadRequest -> ApiResult.Error(ErrorCode.VALIDATION, "Datos inválidos", body)
+                HttpStatusCode.Gone -> ApiResult.Error(ErrorCode.VALIDATION, "Datos expirados, resincroniza", body)
+                HttpStatusCode.ServiceUnavailable -> ApiResult.Error(ErrorCode.SERVER, "Servicio no disponible", body)
+                else -> ApiResult.Error(ErrorCode.SERVER, "Error del servidor (${status.value})", body)
+            }
+        } catch (e: HttpRequestTimeoutException) {
+            ApiResult.Error(ErrorCode.NETWORK, "Tiempo de espera agotado. Verifica la URL del servidor.")
+        } catch (e: java.net.ConnectException) {
+            ApiResult.Error(ErrorCode.NETWORK, "No se pudo conectar al servidor. Verifica la URL: $baseUrl")
+        } catch (e: java.net.UnknownHostException) {
+            ApiResult.Error(ErrorCode.NETWORK, "Host desconocido. Revisa la URL: $baseUrl")
+        } catch (e: kotlinx.serialization.SerializationException) {
+            ApiResult.Error(ErrorCode.PARSE_ERROR, "Error al leer respuesta del servidor", e.message)
+        } catch (e: Exception) {
+            ApiResult.Error(ErrorCode.NETWORK, "Error de conexión: ${e.message?.take(80) ?: "desconocido"}")
+        }
+    }
+
     // ── Auth ──────────────────────────────────────────────
-    suspend fun login(username: String, password: String): Result<ApiResponse> = runCatching {
+    suspend fun login(username: String, password: String): ApiResult<ApiResponse> = request {
         httpClient.post("$baseUrl/api/v1/auth/login") {
             setBody(mapOf("username" to username, "password" to password))
         }.body<ApiResponse>()
     }
 
-    suspend fun register(username: String, email: String, password: String, displayName: String?): Result<ApiResponse> = runCatching {
+    suspend fun register(username: String, email: String, password: String, displayName: String?): ApiResult<ApiResponse> = request {
         httpClient.post("$baseUrl/api/v1/auth/register") {
-            setBody(
-                mapOf(
-                    "username" to username,
-                    "email" to email,
-                    "password" to password,
-                    "displayName" to (displayName ?: username)
-                )
-            )
+            setBody(mapOf("username" to username, "email" to email, "password" to password, "displayName" to (displayName ?: username)))
         }.body<ApiResponse>()
     }
 
     // ── Cards ─────────────────────────────────────────────
-    suspend fun getCards(page: Int = 0, size: Int = 50, team: String? = null): Result<CardsResponse> = runCatching {
+    suspend fun getCards(page: Int = 0, size: Int = 50, team: String? = null): ApiResult<CardsResponse> = request {
         httpClient.get("$baseUrl/api/v1/cards") {
             auth()
             parameter("page", page)
@@ -82,92 +134,43 @@ class ApiService(
         }.body<CardsResponse>()
     }
 
-    suspend fun getCard(id: String): Result<CardResponse> = runCatching {
+    suspend fun getCard(id: String): ApiResult<CardResponse> = request {
         httpClient.get("$baseUrl/api/v1/cards/$id") {
             auth()
         }.body<CardResponse>()
     }
 
     // ── Album ─────────────────────────────────────────────
-    suspend fun getAlbum(): Result<AlbumResponse> = runCatching {
-        httpClient.get("$baseUrl/api/v1/album") {
-            auth()
-        }.body<AlbumResponse>()
+    suspend fun getAlbum(): ApiResult<AlbumResponse> = request {
+        httpClient.get("$baseUrl/api/v1/album") { auth() }.body<AlbumResponse>()
     }
 
-    // ── Repeated ──────────────────────────────────────────
-    suspend fun getRepeatedCards(): Result<List<UserCardResponse>> = runCatching {
-        httpClient.get("$baseUrl/api/v1/album/repeated") {
-            auth()
-        }.body<List<UserCardResponse>>()
+    suspend fun getRepeatedCards(): ApiResult<List<UserCardResponse>> = request {
+        httpClient.get("$baseUrl/api/v1/album/repeated") { auth() }.body<List<UserCardResponse>>()
     }
 
     // ── Exchanges ─────────────────────────────────────────
-    suspend fun getExchanges(): Result<ExchangesResponse> = runCatching {
-        httpClient.get("$baseUrl/api/v1/exchanges") {
-            auth()
-        }.body<ExchangesResponse>()
+    suspend fun getExchanges(): ApiResult<ExchangesResponse> = request {
+        httpClient.get("$baseUrl/api/v1/exchanges") { auth() }.body<ExchangesResponse>()
     }
 
-    suspend fun getAvailableExchanges(): Result<ExchangesResponse> = runCatching {
-        httpClient.get("$baseUrl/api/v1/exchanges/available") {
-            auth()
-        }.body<ExchangesResponse>()
-    }
-
-    suspend fun createExchange(request: CreateExchangeRequest): Result<ExchangeResponse> = runCatching {
-        httpClient.post("$baseUrl/api/v1/exchanges") {
-            auth()
-            setBody(request)
-        }.body<ExchangeResponse>()
-    }
-
-    suspend fun acceptExchange(id: String): Result<ExchangeResponse> = runCatching {
-        httpClient.put("$baseUrl/api/v1/exchanges/$id/accept") {
-            auth()
-        }.body<ExchangeResponse>()
-    }
-
-    suspend fun rejectExchange(id: String): Result<ExchangeResponse> = runCatching {
-        httpClient.put("$baseUrl/api/v1/exchanges/$id/reject") {
-            auth()
-        }.body<ExchangeResponse>()
-    }
-
-    suspend fun completeExchange(id: String): Result<ExchangeResponse> = runCatching {
-        httpClient.put("$baseUrl/api/v1/exchanges/$id/complete") {
-            auth()
-        }.body<ExchangeResponse>()
+    suspend fun getAvailableExchanges(): ApiResult<ExchangesResponse> = request {
+        httpClient.get("$baseUrl/api/v1/exchanges/available") { auth() }.body<ExchangesResponse>()
     }
 
     // ── Panini ────────────────────────────────────────────
-
-    /** Buscar perfil en base local sincronizada */
-    suspend fun paniniLocalLookup(nickname: String): Result<PaniniLookupResponse> = runCatching {
-        httpClient.get("$baseUrl/api/v1/panini/local/$nickname") {
-            // Public endpoint
-        }.body<PaniniLookupResponse>()
+    suspend fun paniniLocalLookup(nickname: String): ApiResult<PaniniLookupResponse> = request {
+        httpClient.get("$baseUrl/api/v1/panini/local/$nickname").body<PaniniLookupResponse>()
     }
 
-    /** Buscar perfil directamente en API externa de Panini */
-    suspend fun paniniExternalLookup(nickname: String): Result<PaniniLookupResponse> = runCatching {
-        httpClient.get("$baseUrl/api/v1/panini/external/$nickname") {
-            // Public endpoint
-        }.body<PaniniLookupResponse>()
+    suspend fun paniniExternalLookup(nickname: String): ApiResult<PaniniLookupResponse> = request {
+        httpClient.get("$baseUrl/api/v1/panini/external/$nickname").body<PaniniLookupResponse>()
     }
 
-    /** Buscar usuarios locales */
-    suspend fun paniniSearch(query: String): Result<PaniniSearchRoot> = runCatching {
+    suspend fun paniniSearch(query: String): ApiResult<PaniniSearchRoot> = request {
         httpClient.get("$baseUrl/api/v1/panini/local/search") {
             parameter("q", query)
         }.body<PaniniSearchRoot>()
-    }
-
-    /** Sincronizar coleccion desde la app */
-    suspend fun paniniSync(request: PaniniSyncClientRequest): Result<PaniniSyncClientResponse> = runCatching {
-        httpClient.post("$baseUrl/api/v1/panini/local/sync") {
-            setBody(request)
-        }.body<PaniniSyncClientResponse>()
     }
 
     fun close() {
@@ -175,7 +178,7 @@ class ApiService(
     }
 }
 
-// ── Response DTOs (serialización directa) ────────────────
+// ── Response DTOs (sin cambios) ────────────────────────────
 @kotlinx.serialization.Serializable
 data class ApiResponse(
     val token: String = "",
@@ -285,7 +288,6 @@ data class ExchangeCardEntry(
     val quantity: Int = 1
 )
 
-// ── Panini DTOs ──────────────────────────────────────────
 @kotlinx.serialization.Serializable
 data class PaniniLookupResponse(
     val nickname: String = "",
@@ -310,23 +312,4 @@ data class PaniniSearchItem(
     val completion: Int = 0,
     val duplicateCount: Int = 0,
     val lastSync: String? = null
-)
-
-@kotlinx.serialization.Serializable
-data class PaniniSyncClientRequest(
-    val nickname: String,
-    val duplicates: List<String> = emptyList(),
-    val missing: List<String> = emptyList(),
-    val completion: Int = 0,
-    val totalCollection: Int = 0
-)
-
-@kotlinx.serialization.Serializable
-data class PaniniSyncClientResponse(
-    val nickname: String = "",
-    val cardsSynced: Int = 0,
-    val duplicatesFound: Int = 0,
-    val missingFound: Int = 0,
-    val completion: Int = 0,
-    val syncedAt: String = ""
 )
