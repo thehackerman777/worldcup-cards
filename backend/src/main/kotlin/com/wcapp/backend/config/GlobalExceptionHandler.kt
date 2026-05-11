@@ -1,6 +1,8 @@
 package com.wcapp.backend.config
 
 import com.wcapp.backend.dto.ErrorResponse
+import com.wcapp.backend.panini.service.SyncExpiredException
+import com.wcapp.backend.panini.service.UserNotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -62,6 +64,30 @@ class GlobalExceptionHandler {
                 status = HttpStatus.BAD_REQUEST.value(),
                 error = "Validation Error",
                 message = errors,
+                path = request.requestURI
+            )
+        )
+    }
+
+    @ExceptionHandler(UserNotFoundException::class)
+    fun handleUserNotFound(ex: UserNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ErrorResponse(
+                status = HttpStatus.NOT_FOUND.value(),
+                error = "Not Found",
+                message = ex.message ?: "Perfil no encontrado",
+                path = request.requestURI
+            )
+        )
+    }
+
+    @ExceptionHandler(SyncExpiredException::class)
+    fun handleSyncExpired(ex: SyncExpiredException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.GONE).body(
+            ErrorResponse(
+                status = HttpStatus.GONE.value(),
+                error = "Cache Expired",
+                message = ex.message ?: "Datos expirados",
                 path = request.requestURI
             )
         )
