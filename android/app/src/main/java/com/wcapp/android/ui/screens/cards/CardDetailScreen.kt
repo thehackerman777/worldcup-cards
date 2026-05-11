@@ -29,7 +29,11 @@ fun CardDetailScreen(
 
     LaunchedEffect(cardId) {
         scope.launch {
-            apiService.getCard(cardId).onSuccess { card -> card = card }.onFailure { e -> error = e.message }
+            apiService.getCard(cardId).onFailure { e -> error = e.message }
+            val result = apiService.getCard(cardId)
+            if (result is com.wcapp.android.data.remote.ApiResult.Success) {
+                card = result.data
+            }
             isLoading = false
         }
     }

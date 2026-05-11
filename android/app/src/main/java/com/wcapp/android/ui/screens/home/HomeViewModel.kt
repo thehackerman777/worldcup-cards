@@ -41,7 +41,7 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(username = username)
 
             // Load album stats
-            apiService.getAlbum().onSuccess { album ->
+            apiService.getAlbum().onSuccess {
                 _uiState.value = _uiState.value.copy(
                     albumCompletion = album.completionPercentage,
                     repeatedCount = album.repeatedCards
@@ -49,7 +49,7 @@ class HomeViewModel(
             }
 
             // Load pending exchanges
-            apiService.getExchanges().onSuccess { exchanges ->
+            apiService.getExchanges().onSuccess {
                 val pending = exchanges.exchanges.count { it.status == "PENDING" }
                 _uiState.value = _uiState.value.copy(pendingExchanges = pending)
             }

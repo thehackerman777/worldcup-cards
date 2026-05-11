@@ -33,7 +33,7 @@ fun ExchangeDetailScreen(
 
     LaunchedEffect(exchangeId) {
         scope.launch {
-            apiService.getExchanges().onSuccess { response ->
+            apiService.getExchanges().onSuccess {
                 exchange = response.exchanges.find { it.id == exchangeId }
             }
             isLoading = false

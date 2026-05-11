@@ -33,7 +33,7 @@ class CardsViewModel(
     fun loadCards(page: Int = 0, team: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, selectedTeam = team)
-            apiService.getCards(page = page, team = team).onSuccess { response ->
+            apiService.getCards(page = page, team = team).onSuccess {
                 _uiState.value = _uiState.value.copy(
                     cards = if (page == 0) response.cards else _uiState.value.cards + response.cards,
                     currentPage = response.currentPage,

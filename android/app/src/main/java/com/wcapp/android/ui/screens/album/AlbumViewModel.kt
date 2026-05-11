@@ -33,7 +33,7 @@ class AlbumViewModel(
     fun loadAlbum() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            apiService.getAlbum().onSuccess { album ->
+            apiService.getAlbum().onSuccess {
                 _uiState.value = _uiState.value.copy(album = album, isLoading = false)
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
@@ -43,7 +43,7 @@ class AlbumViewModel(
 
     fun loadRepeated() {
         viewModelScope.launch {
-            apiService.getRepeatedCards().onSuccess { cards ->
+            apiService.getRepeatedCards().onSuccess {
                 _uiState.value = _uiState.value.copy(repeatedCards = cards)
             }
         }

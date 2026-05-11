@@ -59,7 +59,7 @@ class PaniniViewModel(
                 PaniniSource.EXTERNAL -> apiService.paniniExternalLookup(nickname.trim())
             }
 
-            result.onSuccess { response ->
+            result.onSuccess {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     userData = PaniniUserData(
@@ -102,7 +102,7 @@ class PaniniViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            apiService.paniniSearch(query.trim()).onSuccess { response ->
+            apiService.paniniSearch(query.trim()).onSuccess {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     searchResults = response.results.map {

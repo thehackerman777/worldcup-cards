@@ -32,11 +32,11 @@ class ExchangeViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            apiService.getExchanges().onSuccess { response ->
+            apiService.getExchanges().onSuccess {
                 _uiState.value = _uiState.value.copy(myExchanges = response.exchanges)
             }
 
-            apiService.getAvailableExchanges().onSuccess { response ->
+            apiService.getAvailableExchanges().onSuccess {
                 _uiState.value = _uiState.value.copy(availableExchanges = response.exchanges)
             }
 
