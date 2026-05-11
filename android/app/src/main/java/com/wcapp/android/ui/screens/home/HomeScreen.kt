@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.home
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +23,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit
 ) {
-    val viewModel = get(HomeViewModel::class.java)
+    val viewModel = KoinJavaComponent.get(HomeViewModel::class.java)
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(

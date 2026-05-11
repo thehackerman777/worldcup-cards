@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.exchange
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -9,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wcapp.android.data.remote.*
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,7 +18,7 @@ fun CreateExchangeScreen(
     onExchangeCreated: () -> Unit,
     onBack: () -> Unit
 ) {
-    val viewModel = get(ExchangeViewModel::class.java)
+    val viewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
     val uiState by viewModel.uiState.collectAsState()
 
     var message by remember { mutableStateOf("") }

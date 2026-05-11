@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.cards
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,7 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wcapp.android.ui.theme.RarityColors
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +23,7 @@ fun CardsScreen(
     onNavigateToCardDetail: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val viewModel = get(CardsViewModel::class.java)
+    val viewModel = KoinJavaComponent.get(CardsViewModel::class.java)
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(

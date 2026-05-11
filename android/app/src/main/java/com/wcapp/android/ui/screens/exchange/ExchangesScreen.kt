@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.exchange
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,7 +19,7 @@ fun ExchangesScreen(
     onNavigateToDetail: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val viewModel = get(ExchangeViewModel::class.java)
+    val viewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(

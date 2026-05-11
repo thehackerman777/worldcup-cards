@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.panini
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,14 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaniniScreen(
     onBack: () -> Unit
 ) {
-    val viewModel = get(PaniniViewModel::class.java)
+    val viewModel = KoinJavaComponent.get(PaniniViewModel::class.java)
     val uiState by viewModel.uiState.collectAsState()
 
     var searchQuery by remember { mutableStateOf("") }

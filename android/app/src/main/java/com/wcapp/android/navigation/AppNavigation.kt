@@ -22,7 +22,7 @@ import com.wcapp.android.ui.screens.exchange.ExchangesScreen
 import com.wcapp.android.ui.screens.home.HomeScreen
 import com.wcapp.android.ui.screens.panini.PaniniScreen
 import com.wcapp.android.ui.screens.settings.SettingsScreen
-import org.koin.java.KoinJavaComponent.get
+import org.koin.java.KoinJavaComponent
 
 object Routes {
     const val LOGIN = "login"
@@ -45,7 +45,7 @@ object Routes {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val sessionManager = get(SessionManager::class.java)
+    val sessionManager: SessionManager = KoinJavaComponent.get(SessionManager::class.java)
     val sessionState by sessionManager.sessionState.collectAsState()
 
     val startDestination = if (sessionState.isLoggedIn) Routes.HOME else Routes.LOGIN

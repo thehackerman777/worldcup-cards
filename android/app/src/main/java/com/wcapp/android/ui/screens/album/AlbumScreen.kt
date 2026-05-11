@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.album
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -14,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wcapp.android.ui.theme.RarityColors
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,7 +22,7 @@ fun AlbumScreen(
     onNavigateToCardDetail: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val viewModel = get(AlbumViewModel::class.java)
+    val viewModel = KoinJavaComponent.get(AlbumViewModel::class.java)
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(

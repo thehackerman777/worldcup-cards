@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.auth
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,7 +22,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +29,7 @@ fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
     onRegisterSuccess: () -> Unit
 ) {
-    val viewModel = get(AuthViewModel::class.java)
+    val viewModel = KoinJavaComponent.get(AuthViewModel::class.java)
     val uiState by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
 

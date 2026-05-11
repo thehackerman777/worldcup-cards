@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.exchange
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -15,7 +16,6 @@ import com.wcapp.android.data.remote.ApiService
 import com.wcapp.android.data.remote.ExchangeResponse
 import com.wcapp.android.ui.theme.RarityColors
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,8 +23,8 @@ fun ExchangeDetailScreen(
     exchangeId: String,
     onBack: () -> Unit
 ) {
-    val apiService = get(ApiService::class.java)
-    val viewModel = get(ExchangeViewModel::class.java)
+    val apiService = KoinJavaComponent.get(ApiService::class.java)
+    val viewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
 

@@ -1,4 +1,5 @@
 package com.wcapp.android.ui.screens.cards
+import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -13,7 +14,6 @@ import com.wcapp.android.data.remote.ApiService
 import com.wcapp.android.data.remote.CardResponse
 import com.wcapp.android.ui.theme.RarityColors
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,7 +21,7 @@ fun CardDetailScreen(
     cardId: String,
     onBack: () -> Unit
 ) {
-    val apiService = get(ApiService::class.java)
+    val apiService = KoinJavaComponent.get(ApiService::class.java)
     var card by remember { mutableStateOf<CardResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
