@@ -23,7 +23,7 @@ fun AlbumScreen(
     onBack: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(AlbumViewModel::class.java)
-    val uiState by viewModel.uiState
+    val uiState = viewModel.uiState.value
 
     Scaffold(
         topBar = {

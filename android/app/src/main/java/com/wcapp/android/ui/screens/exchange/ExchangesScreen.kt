@@ -20,7 +20,7 @@ fun ExchangesScreen(
     onBack: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
-    val uiState by viewModel.uiState
+    val uiState = viewModel.uiState.value
 
     Scaffold(
         topBar = {

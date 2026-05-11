@@ -30,7 +30,7 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(AuthViewModel::class.java)
-    val uiState by viewModel.uiState
+    val uiState = viewModel.uiState.value
     val focusManager = LocalFocusManager.current
 
     var username by remember { mutableStateOf("") }

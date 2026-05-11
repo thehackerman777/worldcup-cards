@@ -24,7 +24,7 @@ fun HomeScreen(
     onLogout: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(HomeViewModel::class.java)
-    val uiState by viewModel.uiState
+    val uiState = viewModel.uiState.value
 
     Scaffold(
         topBar = {
