@@ -3,7 +3,6 @@ package com.wcapp.android.ui.screens.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.local.SessionManager
-import com.wcapp.android.data.remote.ApiResult
 import com.wcapp.android.data.remote.ApiService
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
@@ -27,33 +26,20 @@ class AuthViewModel(
     fun login(username: String, password: String) {
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
-
-            when (val result = apiService.login(username, password)) {
-                is ApiResult.Success -> {
-                    val response = result.data
-                    if (response.token.isNotBlank() && response.user != null) {
-                        sessionManager.saveSession(
-                            token = response.token,
-                            refreshToken = response.refreshToken,
-                            userId = response.user.id,
-                            username = response.user.username,
-                            email = response.user.email,
-                            displayName = response.user.displayName
-                        )
-                        _uiState.value = AuthUiState(isSuccess = true)
-                    } else {
-                        _uiState.value = AuthUiState(
-                            error = "Respuesta inválida del servidor",
-                            detail = "token=${response.token.take(10)}..."
-                        )
-                    }
-                }
-                is ApiResult.Error -> {
-                    _uiState.value = AuthUiState(
-                        error = result.message,
-                        detail = result.detail
+            try {
+                val response = apiService.login(username, password)
+                if (response.token.isNotBlank() && response.user != null) {
+                    sessionManager.saveSession(
+                        token = response.token, refreshToken = response.refreshToken,
+                        userId = response.user.id, username = response.user.username,
+                        email = response.user.email, displayName = response.user.displayName
                     )
+                    _uiState.value = AuthUiState(isSuccess = true)
+                } else {
+                    _uiState.value = AuthUiState(error = "Respuesta inválida del servidor")
                 }
+            } catch (e: Exception) {
+                _uiState.value = AuthUiState(error = e.message ?: "Error de conexión")
             }
         }
     }
@@ -61,38 +47,23 @@ class AuthViewModel(
     fun register(username: String, email: String, password: String, displayName: String?) {
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
-
-            when (val result = apiService.register(username, email, password, displayName)) {
-                is ApiResult.Success -> {
-                    val response = result.data
-                    if (response.token.isNotBlank() && response.user != null) {
-                        sessionManager.saveSession(
-                            token = response.token,
-                            refreshToken = response.refreshToken,
-                            userId = response.user.id,
-                            username = response.user.username,
-                            email = response.user.email,
-                            displayName = response.user.displayName
-                        )
-                        _uiState.value = AuthUiState(isSuccess = true)
-                    } else {
-                        _uiState.value = AuthUiState(
-                            error = "Respuesta inválida del servidor",
-                            detail = "token=${response.token.take(10)}..."
-                        )
-                    }
-                }
-                is ApiResult.Error -> {
-                    _uiState.value = AuthUiState(
-                        error = result.message,
-                        detail = result.detail
+            try {
+                val response = apiService.register(username, email, password, displayName)
+                if (response.token.isNotBlank() && response.user != null) {
+                    sessionManager.saveSession(
+                        token = response.token, refreshToken = response.refreshToken,
+                        userId = response.user.id, username = response.user.username,
+                        email = response.user.email, displayName = response.user.displayName
                     )
+                    _uiState.value = AuthUiState(isSuccess = true)
+                } else {
+                    _uiState.value = AuthUiState(error = "Respuesta inválida del servidor")
                 }
+            } catch (e: Exception) {
+                _uiState.value = AuthUiState(error = e.message ?: "Error de conexión")
             }
         }
     }
 
-    fun clearError() {
-        _uiState.value = AuthUiState()
-    }
+    fun clearError() { _uiState.value = AuthUiState() }
 }

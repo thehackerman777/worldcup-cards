@@ -13,8 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wcapp.android.data.remote.ApiService
-import com.wcapp.android.data.remote.onSuccess
-import com.wcapp.android.data.remote.onFailure
 import com.wcapp.android.data.remote.ExchangeResponse
 import com.wcapp.android.ui.theme.RarityColors
 import kotlinx.coroutines.launch
@@ -35,7 +33,7 @@ fun ExchangeDetailScreen(
 
     LaunchedEffect(exchangeId) {
         scope.launch {
-            apiService.getExchanges().onSuccess {
+            apiService.getExchanges()try {
                 exchange = response.exchanges.find { it.id == exchangeId }
             }
             isLoading = false

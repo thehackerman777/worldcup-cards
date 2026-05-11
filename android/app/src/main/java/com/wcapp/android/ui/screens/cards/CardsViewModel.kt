@@ -3,8 +3,6 @@ package com.wcapp.android.ui.screens.cards
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.remote.ApiService
-import com.wcapp.android.data.remote.onSuccess
-import com.wcapp.android.data.remote.onFailure
 import com.wcapp.android.data.remote.CardResponse
 import com.wcapp.android.data.remote.CardsResponse
 import androidx.compose.runtime.mutableStateOf
@@ -35,14 +33,14 @@ class CardsViewModel(
     fun loadCards(page: Int = 0, team: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, selectedTeam = team)
-            apiService.getCards(page = page, team = team).onSuccess {
+            apiService.getCards(page = page, team = team)try {
                 _uiState.value = _uiState.value.copy(
                     cards = if (page == 0) response.cards else _uiState.value.cards + response.cards,
                     currentPage = response.currentPage,
                     totalPages = response.totalPages,
                     isLoading = false
                 )
-            }.onFailure { e ->
+            }} catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
             }
         }

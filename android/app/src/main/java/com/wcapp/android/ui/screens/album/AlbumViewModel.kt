@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.remote.AlbumResponse
 import com.wcapp.android.data.remote.ApiService
-import com.wcapp.android.data.remote.onSuccess
-import com.wcapp.android.data.remote.onFailure
 import com.wcapp.android.data.remote.UserCardResponse
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState

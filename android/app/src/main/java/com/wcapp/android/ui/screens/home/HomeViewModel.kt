@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.local.SessionManager
 import com.wcapp.android.data.remote.ApiService
-import com.wcapp.android.data.remote.onSuccess
-import com.wcapp.android.data.remote.onFailure
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -43,7 +41,7 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(username = username)
 
             // Load album stats
-            apiService.getAlbum().onSuccess {
+            apiService.getAlbum()try {
                 _uiState.value = _uiState.value.copy(
                     albumCompletion = album.completionPercentage,
                     repeatedCount = album.repeatedCards
@@ -51,7 +49,7 @@ class HomeViewModel(
             }
 
             // Load pending exchanges
-            apiService.getExchanges().onSuccess {
+            apiService.getExchanges()try {
                 val pending = exchanges.exchanges.count { it.status == "PENDING" }
                 _uiState.value = _uiState.value.copy(pendingExchanges = pending)
             }

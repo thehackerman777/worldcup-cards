@@ -32,11 +32,11 @@ class ExchangeViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            apiService.getExchanges().onSuccess {
+            apiService.getExchanges()try {
                 _uiState.value = _uiState.value.copy(myExchanges = response.exchanges)
             }
 
-            apiService.getAvailableExchanges().onSuccess {
+            apiService.getAvailableExchanges()try {
                 _uiState.value = _uiState.value.copy(availableExchanges = response.exchanges)
             }
 
@@ -47,13 +47,13 @@ class ExchangeViewModel(
     fun createExchange(request: CreateExchangeRequest) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            apiService.createExchange(request).onSuccess {
+            apiService.createExchange(request)try {
                 _uiState.value = _uiState.value.copy(
                     actionSuccess = "Intercambio creado con éxito",
                     isLoading = false
                 )
                 loadAll()
-            }.onFailure { e ->
+            }} catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
             }
         }
@@ -61,10 +61,10 @@ class ExchangeViewModel(
 
     fun acceptExchange(id: String) {
         viewModelScope.launch {
-            apiService.acceptExchange(id).onSuccess {
+            apiService.acceptExchange(id)try {
                 _uiState.value = _uiState.value.copy(actionSuccess = "Intercambio aceptado")
                 loadAll()
-            }.onFailure { e ->
+            }} catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message)
             }
         }
@@ -72,10 +72,10 @@ class ExchangeViewModel(
 
     fun rejectExchange(id: String) {
         viewModelScope.launch {
-            apiService.rejectExchange(id).onSuccess {
+            apiService.rejectExchange(id)try {
                 _uiState.value = _uiState.value.copy(actionSuccess = "Intercambio rechazado")
                 loadAll()
-            }.onFailure { e ->
+            }} catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message)
             }
         }
@@ -83,10 +83,10 @@ class ExchangeViewModel(
 
     fun completeExchange(id: String) {
         viewModelScope.launch {
-            apiService.completeExchange(id).onSuccess {
+            apiService.completeExchange(id)try {
                 _uiState.value = _uiState.value.copy(actionSuccess = "Intercambio completado")
                 loadAll()
-            }.onFailure { e ->
+            }} catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message)
             }
         }

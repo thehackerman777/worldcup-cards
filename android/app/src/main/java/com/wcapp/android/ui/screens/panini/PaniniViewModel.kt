@@ -3,8 +3,6 @@ package com.wcapp.android.ui.screens.panini
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.remote.ApiService
-import com.wcapp.android.data.remote.onSuccess
-import com.wcapp.android.data.remote.onFailure
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -62,7 +60,7 @@ class PaniniViewModel(
             }
 
             when (result) {
-                is com.wcapp.android.data.remote.ApiResult.Success -> {
+                is /* ApiResult removed */ -> {
                     val response = result.data
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -78,7 +76,7 @@ class PaniniViewModel(
                         )
                     )
                 }
-                is com.wcapp.android.data.remote.ApiResult.Error -> {
+                is /* ApiResult removed */ -> {
                     val msg = result.message ?: "Error de conexión"
                     val userMsg = when {
                         msg.contains("404") || msg.contains("not found", ignoreCase = true) ->
@@ -108,7 +106,7 @@ class PaniniViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             when (val result = apiService.paniniSearch(query.trim())) {
-                is com.wcapp.android.data.remote.ApiResult.Success -> {
+                is /* ApiResult removed */ -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         searchResults = result.data.results.map {
@@ -121,7 +119,7 @@ class PaniniViewModel(
                         }
                     )
                 }
-                is com.wcapp.android.data.remote.ApiResult.Error -> {
+                is /* ApiResult removed */ -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = result.message

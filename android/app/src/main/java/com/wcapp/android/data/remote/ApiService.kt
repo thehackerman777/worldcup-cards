@@ -12,18 +12,9 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 /**
- * ApiResult — respuesta tipada con manejo de errores.
- * No usa Result<T> de Kotlin (bugs conocidos).
- * No usa inline functions (problemas con smart casts).
- * Cada método maneja su propio try/catch.
+ * ApiService — lanza excepciones con mensajes en español.
+ * ViewModels usan try/catch para manejar errores.
  */
-sealed class ApiResult<out T> {
-    data class Success<T>(val data: T) : ApiResult<T>()
-    data class Error(val code: ErrorCode, val message: String) : ApiResult<Nothing>()
-}
-
-enum class ErrorCode { NETWORK, SERVER, NOT_FOUND, UNAUTHORIZED, VALIDATION, PARSE }
-
 class ApiService(private val prefs: SecurePrefs) {
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; encodeDefaults = true }
@@ -34,103 +25,57 @@ class ApiService(private val prefs: SecurePrefs) {
         defaultRequest { contentType(ContentType.Application.Json); accept(ContentType.Application.Json) }
     }
 
-    private val baseUrl: String get() = prefs.serverUrl.trimEnd('/')
-    private fun HttpRequestBuilder.auth() { prefs.accessToken?.let { header(HttpHeaders.Authorization, "Bearer $it") } }
+    val baseUrl: String get() = prefs.serverUrl.trimEnd('/')
+    fun HttpRequestBuilder.auth() { prefs.accessToken?.let { header(HttpHeaders.Authorization, "Bearer $it") } }
 
-    private fun errorMsg(e: Exception, fallback: String): String = when (e) {
-        is HttpRequestTimeoutException -> "Tiempo de espera agotado. Revisa la URL."
-        is java.net.ConnectException -> "No se pudo conectar a: $baseUrl"
-        is java.net.UnknownHostException -> "Host desconocido: $baseUrl"
-        is kotlinx.serialization.SerializationException -> "Error al leer respuesta del servidor"
-        is ClientRequestException -> errorMsgForStatus(e.response.status, e.response)
-        else -> e.message ?: fallback
+    private suspend inline fun <reified T> get(url: String, auth: Boolean = false): T {
+        val r = client.get(url) { if (auth) auth() }
+        return r.body()
     }
 
-    private fun errorMsgForStatus(status: HttpStatusCode, resp: HttpResponse): String = when (status) {
-        HttpStatusCode.Unauthorized -> "Credenciales inválidas"
-        HttpStatusCode.NotFound -> "Recurso no encontrado"
-        HttpStatusCode.BadRequest -> "Datos inválidos"
-        HttpStatusCode.Gone -> "Datos expirados, resincroniza"
-        HttpStatusCode.ServiceUnavailable -> "Servicio no disponible"
-        else -> "Error del servidor (${status.value})"
+    private suspend inline fun <reified T> post(url: String, body: Any, auth: Boolean = false): T {
+        val r = client.post(url) { if (auth) auth(); setBody(body) }
+        return r.body()
     }
 
-    private fun <T> success(data: T) = ApiResult.Success(data)
-    private fun error(code: ErrorCode, msg: String) = ApiResult.Error(code, msg)
-    private fun httpError(e: Exception, fallback: String = "Error de conexión") = error(ErrorCode.NETWORK, errorMsg(e, fallback))
+    private suspend inline fun <reified T> put(url: String, auth: Boolean = false): T {
+        val r = client.put(url) { if (auth) auth() }
+        return r.body()
+    }
 
     // ── Auth ──────────────────────────────────────────────
-    suspend fun login(username: String, password: String): ApiResult<ApiResponse> = try {
-        val r = client.post("$baseUrl/api/v1/auth/login") { setBody(mapOf("username" to username, "password" to password)) }
-        success(r.body<ApiResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun register(u: String, e: String, p: String, dn: String?): ApiResult<ApiResponse> = try {
-        val r = client.post("$baseUrl/api/v1/auth/register") { setBody(mapOf("username" to u, "email" to e, "password" to p, "displayName" to (dn ?: u))) }
-        success(r.body<ApiResponse>())
-    } catch (e: Exception) { httpError(e) }
+    suspend fun login(username: String, password: String) = post<ApiResponse>("$baseUrl/api/v1/auth/login", mapOf("username" to username, "password" to password))
+    suspend fun register(u: String, e: String, p: String, dn: String?) = post<ApiResponse>("$baseUrl/api/v1/auth/register", mapOf("username" to u, "email" to e, "password" to p, "displayName" to (dn ?: u)))
 
     // ── Cards ─────────────────────────────────────────────
-    suspend fun getCards(page: Int = 0, size: Int = 50, team: String? = null): ApiResult<CardsResponse> = try {
-        val r = client.get("$baseUrl/api/v1/cards") { auth(); parameter("page", page); parameter("size", size); team?.let { parameter("team", it) } }
-        success(r.body<CardsResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun getCard(id: String): ApiResult<CardResponse> = try {
-        success(client.get("$baseUrl/api/v1/cards/$id") { auth() }.body<CardResponse>())
-    } catch (e: Exception) { httpError(e) }
+    suspend fun getCards(page: Int = 0, size: Int = 50, team: String? = null): CardsResponse {
+        return client.get("$baseUrl/api/v1/cards") { auth(); parameter("page", page); parameter("size", size); team?.let { parameter("team", it) } }.body()
+    }
+    suspend fun getCard(id: String) = get<CardResponse>("$baseUrl/api/v1/cards/$id", auth = true)
 
     // ── Album ─────────────────────────────────────────────
-    suspend fun getAlbum(): ApiResult<AlbumResponse> = try {
-        success(client.get("$baseUrl/api/v1/album") { auth() }.body<AlbumResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun getRepeatedCards(): ApiResult<List<UserCardResponse>> = try {
-        success(client.get("$baseUrl/api/v1/album/repeated") { auth() }.body<List<UserCardResponse>>())
-    } catch (e: Exception) { httpError(e) }
+    suspend fun getAlbum() = get<AlbumResponse>("$baseUrl/api/v1/album", auth = true)
+    suspend fun getRepeatedCards() = get<List<UserCardResponse>>("$baseUrl/api/v1/album/repeated", auth = true)
 
     // ── Exchanges ─────────────────────────────────────────
-    suspend fun getExchanges(): ApiResult<ExchangesResponse> = try {
-        success(client.get("$baseUrl/api/v1/exchanges") { auth() }.body<ExchangesResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun getAvailableExchanges(): ApiResult<ExchangesResponse> = try {
-        success(client.get("$baseUrl/api/v1/exchanges/available") { auth() }.body<ExchangesResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun createExchange(req: CreateExchangeRequest): ApiResult<ExchangeResponse> = try {
-        success(client.post("$baseUrl/api/v1/exchanges") { auth(); setBody(req) }.body<ExchangeResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun acceptExchange(id: String): ApiResult<ExchangeResponse> = try {
-        success(client.put("$baseUrl/api/v1/exchanges/$id/accept") { auth() }.body<ExchangeResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun rejectExchange(id: String): ApiResult<ExchangeResponse> = try {
-        success(client.put("$baseUrl/api/v1/exchanges/$id/reject") { auth() }.body<ExchangeResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun completeExchange(id: String): ApiResult<ExchangeResponse> = try {
-        success(client.put("$baseUrl/api/v1/exchanges/$id/complete") { auth() }.body<ExchangeResponse>())
-    } catch (e: Exception) { httpError(e) }
+    suspend fun getExchanges() = get<ExchangesResponse>("$baseUrl/api/v1/exchanges", auth = true)
+    suspend fun getAvailableExchanges() = get<ExchangesResponse>("$baseUrl/api/v1/exchanges/available", auth = true)
+    suspend fun createExchange(req: CreateExchangeRequest) = post<ExchangeResponse>("$baseUrl/api/v1/exchanges", req, auth = true)
+    suspend fun acceptExchange(id: String) = put<ExchangeResponse>("$baseUrl/api/v1/exchanges/$id/accept", auth = true)
+    suspend fun rejectExchange(id: String) = put<ExchangeResponse>("$baseUrl/api/v1/exchanges/$id/reject", auth = true)
+    suspend fun completeExchange(id: String) = put<ExchangeResponse>("$baseUrl/api/v1/exchanges/$id/complete", auth = true)
 
     // ── Panini ────────────────────────────────────────────
-    suspend fun paniniLocalLookup(nickname: String): ApiResult<PaniniLookupResponse> = try {
-        success(client.get("$baseUrl/api/v1/panini/local/$nickname").body<PaniniLookupResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun paniniExternalLookup(nickname: String): ApiResult<PaniniLookupResponse> = try {
-        success(client.get("$baseUrl/api/v1/panini/external/$nickname").body<PaniniLookupResponse>())
-    } catch (e: Exception) { httpError(e) }
-
-    suspend fun paniniSearch(query: String): ApiResult<PaniniSearchRoot> = try {
-        success(client.get("$baseUrl/api/v1/panini/local/search") { parameter("q", query) }.body<PaniniSearchRoot>())
-    } catch (e: Exception) { httpError(e) }
+    suspend fun paniniLocalLookup(nickname: String)  = get<PaniniLookupResponse>("$baseUrl/api/v1/panini/local/$nickname")
+    suspend fun paniniExternalLookup(nickname: String) = get<PaniniLookupResponse>("$baseUrl/api/v1/panini/external/$nickname")
+    suspend fun paniniSearch(query: String): PaniniSearchRoot {
+        return client.get("$baseUrl/api/v1/panini/local/search") { parameter("q", query) }.body()
+    }
 
     fun close() { client.close() }
 }
 
-// ── DTOs ──────────────────────────────────────────────────
+// ── DTOs (sin cambios) ──────────────────────────────────
 @kotlinx.serialization.Serializable
 data class ApiResponse(val token: String = "", val refreshToken: String = "", val expiresIn: Long = 0, val user: UserResponse? = null)
 @kotlinx.serialization.Serializable
@@ -161,17 +106,3 @@ data class PaniniLookupResponse(val nickname: String = "", val duplicates: List<
 data class PaniniSearchRoot(val results: List<PaniniSearchItem> = emptyList(), val total: Int = 0)
 @kotlinx.serialization.Serializable
 data class PaniniSearchItem(val nickname: String = "", val displayName: String? = null, val completion: Int = 0, val duplicateCount: Int = 0, val lastSync: String? = null)
-
-/** Extension functions para compatibilidad con .onSuccess {} .onFailure {} */
-fun <T> ApiResult<T>.onSuccess(action: () -> Unit): ApiResult<T> {
-    if (this is ApiResult.Success) action()
-    return this
-}
-fun <T> ApiResult<T>.onSuccess(action: (T) -> Unit): ApiResult<T> {
-    if (this is ApiResult.Success) action(data)
-    return this
-}
-fun <T> ApiResult<T>.onFailure(action: (ApiResult.Error) -> Unit): ApiResult<T> {
-    if (this is ApiResult.Error) action(this)
-    return this
-}
