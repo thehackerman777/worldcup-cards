@@ -14,8 +14,9 @@
         android:theme="@style/Theme.WorldCupCards"
         android:usesCleartextTraffic="true">
 
+        <!-- Splash / Launcher -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.WorldCupCards">
             <intent-filter>
@@ -23,5 +24,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Main (already has navigation) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.WorldCupCards" />
     </application>
 </manifest>
