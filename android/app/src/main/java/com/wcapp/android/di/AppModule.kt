@@ -32,5 +32,5 @@ val appModule = module {
     factory { ExchangeViewModel(get()) }
     factory { SettingsViewModel(get()) }
     factory { PaniniViewModel(get()) }
-    factory { ScannerViewModel(androidContext()) }
+    factory { ScannerViewModel(androidContext() as android.app.Application) }
 }
