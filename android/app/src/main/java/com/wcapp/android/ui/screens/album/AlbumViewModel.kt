@@ -33,10 +33,7 @@ class AlbumViewModel(
     fun loadAlbum() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val albumResult = apiService.getAlbum()
-            when (albumResult) {
-                is com.wcapp.android.data.remote.ApiResult.Success -> {
-                    val album = albumResult.data
+            apiService.getAlbum().onSuccess {
                 _uiState.value = _uiState.value.copy(album = album, isLoading = false)
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(error = e.message, isLoading = false)
@@ -46,10 +43,7 @@ class AlbumViewModel(
 
     fun loadRepeated() {
         viewModelScope.launch {
-            val cardResult = apiService.getRepeatedCards()
-            when (cardResult) {
-                is com.wcapp.android.data.remote.ApiResult.Success -> {
-                    val cards = cardResult.data
+            apiService.getRepeatedCards().onSuccess {
                 _uiState.value = _uiState.value.copy(repeatedCards = cards)
             }
         }

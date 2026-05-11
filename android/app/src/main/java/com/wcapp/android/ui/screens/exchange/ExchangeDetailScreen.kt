@@ -33,14 +33,8 @@ fun ExchangeDetailScreen(
 
     LaunchedEffect(exchangeId) {
         scope.launch {
-            val exchangeResult = apiService.getExchanges()
-            when (exchangeResult) {
-                is com.wcapp.android.data.remote.ApiResult.Success -> {
-                    val response = exchangeResult.data
+            apiService.getExchanges().onSuccess {
                 exchange = response.exchanges.find { it.id == exchangeId }
-                }
-                is com.wcapp.android.data.remote.ApiResult.Error -> { }
-            }
             }
             isLoading = false
         }

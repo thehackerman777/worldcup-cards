@@ -41,10 +41,7 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(username = username)
 
             // Load album stats
-            val albumResult = apiService.getAlbum()
-            when (albumResult) {
-                is com.wcapp.android.data.remote.ApiResult.Success -> {
-                    val album = albumResult.data
+            apiService.getAlbum().onSuccess {
                 _uiState.value = _uiState.value.copy(
                     albumCompletion = album.completionPercentage,
                     repeatedCount = album.repeatedCards
