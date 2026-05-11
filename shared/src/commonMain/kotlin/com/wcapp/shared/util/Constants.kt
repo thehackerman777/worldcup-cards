@@ -26,6 +26,13 @@ object Constants {
 
     fun exchangeAction(id: String, action: String) = "$API_PREFIX/exchanges/$id/$action"
 
+    // Panini
+    const val PANINI_USER = "$API_PREFIX/panini/user"
+    const val PANINI_SEARCH = "$API_PREFIX/panini/search"
+    const val PANINI_SYNC = "$API_PREFIX/panini/user/sync"
+
+    fun paniniUser(nickname: String) = "$API_PREFIX/panini/user/$nickname"
+
     fun cardDetail(id: String) = "$API_PREFIX/cards/$id"
     fun albumCardRemove(id: String) = "$API_PREFIX/album/cards/$id"
 }

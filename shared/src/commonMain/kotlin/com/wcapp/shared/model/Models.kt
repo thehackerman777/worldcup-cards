@@ -106,3 +106,41 @@ data class ErrorBody(
     val message: String = "",
     val path: String = ""
 )
+
+// ── Panini Models ────────────────────────────────────────
+
+@Serializable
+data class PaniniUserResponse(
+    val nickname: String = "",
+    val duplicates: List<String> = emptyList(),
+    val missing: List<String> = emptyList(),
+    val completion: Int = 0,
+    @SerialName("lastSync") val lastSync: String = "",
+    @SerialName("profileFound") val profileFound: Boolean = true,
+    @SerialName("fromCache") val fromCache: Boolean = false
+)
+
+@Serializable
+data class PaniniSearchResponse(
+    val results: List<PaniniSearchItem> = emptyList(),
+    val total: Int = 0
+)
+
+@Serializable
+data class PaniniSearchItem(
+    val nickname: String = "",
+    @SerialName("displayName") val displayName: String? = null,
+    val completion: Int = 0,
+    @SerialName("duplicateCount") val duplicateCount: Int = 0,
+    @SerialName("lastSync") val lastSync: String? = null
+)
+
+@Serializable
+data class PaniniSyncResponse(
+    val nickname: String = "",
+    @SerialName("cardsSynced") val cardsSynced: Int = 0,
+    @SerialName("duplicatesFound") val duplicatesFound: Int = 0,
+    @SerialName("missingFound") val missingFound: Int = 0,
+    val completion: Int = 0,
+    @SerialName("syncedAt") val syncedAt: String = ""
+)

@@ -19,6 +19,7 @@ fun HomeScreen(
     onNavigateToAlbum: () -> Unit,
     onNavigateToCards: () -> Unit,
     onNavigateToExchanges: () -> Unit,
+    onNavigateToPanini: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -146,6 +147,15 @@ fun HomeScreen(
                 title = "Intercambios",
                 subtitle = "Solicita o acepta intercambios",
                 onClick = onNavigateToExchanges
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ActionButton(
+                icon = Icons.Default.Hub,
+                title = "Panini Sync",
+                subtitle = "Buscar usuarios y sincronizar álbum Panini",
+                onClick = onNavigateToPanini
             )
 
             Spacer(modifier = Modifier.height(32.dp))

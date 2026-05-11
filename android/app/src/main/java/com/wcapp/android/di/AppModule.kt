@@ -8,6 +8,7 @@ import com.wcapp.android.ui.screens.auth.AuthViewModel
 import com.wcapp.android.ui.screens.cards.CardsViewModel
 import com.wcapp.android.ui.screens.exchange.ExchangeViewModel
 import com.wcapp.android.ui.screens.home.HomeViewModel
+import com.wcapp.android.ui.screens.panini.PaniniViewModel
 import com.wcapp.android.ui.screens.settings.SettingsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -29,4 +30,5 @@ val appModule = module {
     factory { AlbumViewModel(get()) }
     factory { ExchangeViewModel(get()) }
     factory { SettingsViewModel(get()) }
+    factory { PaniniViewModel(get()) }
 }

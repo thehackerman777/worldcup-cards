@@ -140,6 +140,26 @@ class ApiService(
         }.body<ExchangeResponse>()
     }
 
+    // ── Panini ────────────────────────────────────────────
+    suspend fun paniniLookup(nickname: String): PaniniLookupResponse = runCatching {
+        httpClient.get("$baseUrl/api/v1/panini/user/$nickname") {
+            // Public endpoint, no auth needed
+        }.body<PaniniLookupResponse>()
+    }
+
+    suspend fun paniniSearch(query: String): PaniniSearchRoot = runCatching {
+        httpClient.get("$baseUrl/api/v1/panini/search") {
+            parameter("q", query)
+        }.body<PaniniSearchRoot>()
+    }
+
+    suspend fun paniniSync(request: PaniniSyncClientRequest): PaniniSyncClientResponse = runCatching {
+        httpClient.post("$baseUrl/api/v1/panini/user/sync") {
+            auth()
+            setBody(request)
+        }.body<PaniniSyncClientResponse>()
+    }
+
     fun close() {
         httpClient.close()
     }
@@ -253,4 +273,50 @@ data class CreateExchangeRequest(
 data class ExchangeCardEntry(
     val cardId: String,
     val quantity: Int = 1
+)
+
+// ── Panini DTOs ──────────────────────────────────────────
+@kotlinx.serialization.Serializable
+data class PaniniLookupResponse(
+    val nickname: String = "",
+    val duplicates: List<String> = emptyList(),
+    val missing: List<String> = emptyList(),
+    val completion: Int = 0,
+    val lastSync: String = "",
+    val profileFound: Boolean = true,
+    val fromCache: Boolean = false
+)
+
+@kotlinx.serialization.Serializable
+data class PaniniSearchRoot(
+    val results: List<PaniniSearchItem> = emptyList(),
+    val total: Int = 0
+)
+
+@kotlinx.serialization.Serializable
+data class PaniniSearchItem(
+    val nickname: String = "",
+    val displayName: String? = null,
+    val completion: Int = 0,
+    val duplicateCount: Int = 0,
+    val lastSync: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class PaniniSyncClientRequest(
+    val nickname: String,
+    val duplicates: List<String> = emptyList(),
+    val missing: List<String> = emptyList(),
+    val completion: Int = 0,
+    val totalCollection: Int = 0
+)
+
+@kotlinx.serialization.Serializable
+data class PaniniSyncClientResponse(
+    val nickname: String = "",
+    val cardsSynced: Int = 0,
+    val duplicatesFound: Int = 0,
+    val missingFound: Int = 0,
+    val completion: Int = 0,
+    val syncedAt: String = ""
 )

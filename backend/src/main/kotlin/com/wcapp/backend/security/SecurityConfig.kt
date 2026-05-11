@@ -1,4 +1,4 @@
-package com.wcapp.backend.config
+package com.wcapp.backend.security
 
 import com.wcapp.backend.security.JwtAuthFilter
 import org.springframework.context.annotation.Bean
@@ -34,6 +34,9 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                     // Health check
                     .requestMatchers(HttpMethod.GET, "/api/v1/health", "/actuator/health").permitAll()
+                    // Panini public endpoints (user lookup for testing)
+                    .requestMatchers(HttpMethod.GET, "/api/v1/panini/user/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/panini/search").permitAll()
                     // Swagger / docs (if added later)
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     // Everything else requires authentication

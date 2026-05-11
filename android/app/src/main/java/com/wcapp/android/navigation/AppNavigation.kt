@@ -20,6 +20,7 @@ import com.wcapp.android.ui.screens.exchange.CreateExchangeScreen
 import com.wcapp.android.ui.screens.exchange.ExchangeDetailScreen
 import com.wcapp.android.ui.screens.exchange.ExchangesScreen
 import com.wcapp.android.ui.screens.home.HomeScreen
+import com.wcapp.android.ui.screens.panini.PaniniScreen
 import com.wcapp.android.ui.screens.settings.SettingsScreen
 import org.koin.java.KoinJavaComponent.get
 
@@ -34,6 +35,7 @@ object Routes {
     const val EXCHANGE_DETAIL = "exchange/{exchangeId}"
     const val CREATE_EXCHANGE = "create-exchange/{receiverId}"
     const val SETTINGS = "settings"
+    const val PANINI = "panini"
 
     fun cardDetail(cardId: String) = "card/$cardId"
     fun exchangeDetail(exchangeId: String) = "exchange/$exchangeId"
@@ -79,6 +81,7 @@ fun AppNavigation() {
                 onNavigateToAlbum = { navController.navigate(Routes.ALBUM) },
                 onNavigateToCards = { navController.navigate(Routes.CARDS) },
                 onNavigateToExchanges = { navController.navigate(Routes.EXCHANGES) },
+                onNavigateToPanini = { navController.navigate(Routes.PANINI) },
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                 onLogout = {
                     sessionManager.clearSession()
@@ -146,6 +149,10 @@ fun AppNavigation() {
 
         composable(Routes.SETTINGS) {
             SettingsScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.PANINI) {
+            PaniniScreen(onBack = { navController.popBackStack() })
         }
     }
 }

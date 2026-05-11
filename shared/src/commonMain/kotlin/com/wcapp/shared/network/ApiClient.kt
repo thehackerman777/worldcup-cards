@@ -169,6 +169,20 @@ class ApiClient(
         }.body<Exchange>()
     }
 
+    // ── Panini ─────────────────────────────────────────────
+
+    suspend fun paniniLookup(nickname: String): Result<PaniniUserResponse> = runCatching {
+        httpClient.get("$baseUrl${Constants.paniniUser(nickname)}") {
+            // Public endpoint, no auth needed
+        }.body<PaniniUserResponse>()
+    }
+
+    suspend fun paniniSearch(query: String): Result<PaniniSearchResponse> = runCatching {
+        httpClient.get("$baseUrl${Constants.PANINI_SEARCH}") {
+            parameter("q", query)
+        }.body<PaniniSearchResponse>()
+    }
+
     fun close() {
         httpClient.close()
     }
