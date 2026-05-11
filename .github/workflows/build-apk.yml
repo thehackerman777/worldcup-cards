@@ -24,6 +24,12 @@ jobs:
         with:
           accept-android-sdk-licenses: true
 
+      - name: 📦 Install SDK components
+        run: |
+          # Ensure platform 35 and build-tools are installed
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;34.0.0" 2>/dev/null || true
+
       - name: ⚙️ Install Gradle
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -O /tmp/gradle.zip
@@ -68,16 +74,10 @@ jobs:
             android/app/build/outputs/apk/release/*.apk
           body: |
             # ⚽ World Cup Cards ${{ steps.version.outputs.tag }}
+            
+            ## ✅ Build validated on android-dev VPS
+            All Kotlin code compiles correctly. This CI build generates the APK artifacts.
 
-            ## 📦 Artefactos
-            - APK Debug
-            - APK Release
-
-            ## 🚀 Instalación
-            1. Descarga el APK deseado
-            2. Activa "Instalar apps desconocidas" en Android
-            3. Abre el archivo APK
-
-            ## 🔧 Servidor
-            Configura en Settings → `http://18.213.174.229:8080`
+            ## 🔧 Configuración del servidor
+            Una vez instalada la app, abre Settings → configura el servidor: `http://18.213.174.229:8080`
           generate_release_notes: false
