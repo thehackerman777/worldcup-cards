@@ -24,60 +24,40 @@ jobs:
         with:
           accept-android-sdk-licenses: true
 
-      - name: 📦 Install SDK components
-        run: |
-          # Ensure platform 35 and build-tools are installed
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;34.0.0" 2>/dev/null || true
-
       - name: ⚙️ Install Gradle
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -O /tmp/gradle.zip
           sudo unzip -q /tmp/gradle.zip -d /opt/
           sudo ln -sf /opt/gradle-8.10.2/bin/gradle /usr/local/bin/gradle
-          gradle --version | head -3
 
       - name: 🔨 Build Debug APK
         working-directory: ./android
         run: gradle :app:assembleDebug --no-daemon
 
-      - name: 🔨 Build Release APK
-        working-directory: ./android
-        run: gradle :app:assembleRelease --no-daemon
-
-      - name: 🏷️ Extract version info
+      - name: 🏷️ Extract version
         id: version
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=${TAG#v}" >> $GITHUB_OUTPUT
 
-      - name: 📤 Upload Debug APK
+      - name: 📤 Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: worldcup-cards-${{ steps.version.outputs.version }}-debug
           path: android/app/build/outputs/apk/debug/*.apk
-
-      - name: 📤 Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: worldcup-cards-${{ steps.version.outputs.version }}-release
-          path: android/app/build/outputs/apk/release/*.apk
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: World Cup Cards ${{ steps.version.outputs.tag }}
           tag_name: ${{ steps.version.outputs.tag }}
-          files: |
-            android/app/build/outputs/apk/debug/*.apk
-            android/app/build/outputs/apk/release/*.apk
+          files: android/app/build/outputs/apk/debug/*.apk
           body: |
             # ⚽ World Cup Cards ${{ steps.version.outputs.tag }}
-            
-            ## ✅ Build validated on android-dev VPS
-            All Kotlin code compiles correctly. This CI build generates the APK artifacts.
 
-            ## 🔧 Configuración del servidor
-            Una vez instalada la app, abre Settings → configura el servidor: `http://18.213.174.229:8080`
+            APK Debug listo para instalar.
+
+            ## 🔧 Configuración
+            Settings → Servidor: `http://18.213.174.229:8080`
           generate_release_notes: false
