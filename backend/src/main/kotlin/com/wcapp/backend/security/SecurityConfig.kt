@@ -38,6 +38,8 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/api/v1/panini/user/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/panini/local/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/panini/external/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/panini/cloud/**").permitAll()
+                    .requestMatchers("/api/v1/panini/mock/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/panini/local/sync").permitAll()
                     // Swagger / docs (if added later)
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()

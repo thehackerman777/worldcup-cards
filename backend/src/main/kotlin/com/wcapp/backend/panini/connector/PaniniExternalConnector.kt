@@ -3,61 +3,60 @@ package com.wcapp.backend.panini.connector
 import com.wcapp.backend.panini.dto.PaniniUserResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
+import java.time.Duration
+import org.springframework.boot.web.client.RestTemplateBuilder
 
 /**
  * Conector para consultar información directamente desde la API pública de Panini.
  *
- * Configuración en application.yml:
- *   app.panini.external:
- *     enabled: false
- *     base-url: https://api.panini.com/v1
- *     timeout-ms: 10000
+ * Configuración:
+ *   app.panini.external.enabled=true   → intenta API externa
+ *   app.panini.external.enabled=false  → salta directo a fallback local
  *
- * Cuando enabled=false, el endpoint retorna error indicando que no está configurado.
- * Cuando enabled=true, intenta conectar con la API externa real de Panini.
+ * Flujo:
+ *   1. Si API externa configurada y enabled → intenta conectar
+ *   2. Si la API responde → retorna datos frescos
+ *   3. Si la API no responde → lanza excepción (el controller decide el fallback)
  */
 @Component
 class PaniniExternalConnector(
-    @Value("\${app.panini.external.enabled:false}") private val enabled: Boolean,
-    @Value("\${app.panini.external.base-url:}") private val baseUrl: String,
-    @Value("\${app.panini.external.timeout-ms:10000}") private val timeoutMs: Long
+    @Value("\${app.panini.external.enabled:false}") val enabled: Boolean,
+    @Value("\${app.panini.external.base-url:}") val baseUrl: String,
+    @Value("\${app.panini.external.timeout-ms:10000}") val timeoutMs: Long
 ) {
     private val log = LoggerFactory.getLogger(PaniniExternalConnector::class.java)
-    private val restTemplate = RestTemplate()
+    private val restTemplate = RestTemplateBuilder()
+        .setConnectTimeout(Duration.ofMillis(timeoutMs))
+        .setReadTimeout(Duration.ofMillis(timeoutMs))
+        .build()
 
     /**
-     * Busca un perfil de usuario directamente en la API pública de Panini.
-     *
-     * @throws PaniniExternalUnavailableException si la conexión falla o no está configurada
-     * @throws PaniniUserNotFoundExternalException si la API responde que el usuario no existe
+     * Intenta buscar un perfil en la API externa de Panini.
+     * Retorna null si no se pudo conectar (para que el controller decida el fallback).
      */
-    fun lookupUser(nickname: String): PaniniUserResponse {
+    fun tryLookupUser(nickname: String): PaniniUserResponse? {
         if (!enabled) {
-            log.warn("Panini external connector is DISABLED. Set app.panini.external.enabled=true to activate.")
-            throw PaniniExternalUnavailableException(
-                "Conexión externa con Panini no configurada. " +
-                "Activa app.panini.external.enabled=true en application.yml " +
-                "o usa GET /api/v1/panini/local/{nickname} para datos sincronizados."
-            )
+            log.warn("Panini external disabled - skipping API call")
+            return null
         }
 
         if (baseUrl.isBlank()) {
-            throw PaniniExternalUnavailableException(
-                "URL base de Panini no configurada. Define app.panini.external.base-url."
-            )
+            log.warn("Panini external URL not configured - skipping API call")
+            return null
         }
 
         val url = "$baseUrl/users/$nickname/collection"
-        log.info("Consultando API externa de Panini: $url")
+        log.info("🌐 Consulting Panini API: $url")
 
         return try {
             val response = restTemplate.getForEntity(url, PaniniExternalResponse::class.java)
 
             if (response.statusCode.is2xxSuccessful && response.body != null) {
                 val body = response.body!!
+                log.info("🌐 Panini API OK: '{}' | {} duplicates, {} missing", nickname,
+                    body.duplicates?.size ?: 0, body.missing?.size ?: 0)
                 PaniniUserResponse(
                     nickname = nickname,
                     duplicates = body.duplicates ?: emptyList(),
@@ -68,19 +67,12 @@ class PaniniExternalConnector(
                     fromCache = false
                 )
             } else {
-                throw PaniniExternalUnavailableException(
-                    "API de Panini respondió con código ${response.statusCode}"
-                )
+                log.warn("🌐 Panini API returned {}", response.statusCode)
+                null
             }
-        } catch (e: PaniniExternalUnavailableException) {
-            throw e
         } catch (e: Exception) {
-            log.error("Error consultando API externa de Panini para '$nickname'", e)
-            throw PaniniExternalUnavailableException(
-                "No se pudo conectar con la base de datos de Panini. " +
-                "Mensaje: ${e.message ?: "Error desconocido"}. " +
-                "Verifica que la API externa esté disponible y configurada correctamente."
-            )
+            log.warn("🌐 Panini API connection failed for '{}': {}", nickname, e.message)
+            null // Return null so controller uses fallback
         }
     }
 }
@@ -92,4 +84,3 @@ data class PaniniExternalResponse(
 )
 
 class PaniniExternalUnavailableException(message: String) : RuntimeException(message)
-class PaniniUserNotFoundExternalException(message: String) : RuntimeException(message)
