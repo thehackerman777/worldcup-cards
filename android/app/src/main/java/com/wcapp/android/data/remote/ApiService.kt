@@ -22,8 +22,8 @@ sealed class ApiResult<out T> {
     data class Error(val code: ErrorCode, val message: String, val detail: String? = null) : ApiResult<Nothing>()
 
     /** Compatibilidad: .onSuccess {} .onFailure {} */
-    inline fun onSuccess(action: (T) -> Unit): ApiResult<T> {
-        if (this is Success) action(data)
+    inline fun onSuccess(action: () -> Unit): ApiResult<T> {
+        if (this is Success) action()
         return this
     }
     inline fun onFailure(action: (Error) -> Unit): ApiResult<T> {

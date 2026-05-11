@@ -29,7 +29,7 @@ fun CardDetailScreen(
 
     LaunchedEffect(cardId) {
         scope.launch {
-            apiService.getCard(cardId).onSuccess { card = it }.onFailure { error = it.message }
+            apiService.getCard(cardId).onSuccess { card -> card = card }.onFailure { e -> error = e.message }
             isLoading = false
         }
     }
