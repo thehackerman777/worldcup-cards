@@ -24,7 +24,8 @@ fun HomeScreen(
     onLogout: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(HomeViewModel::class.java)
-    val uiState by viewModel.uiState.collectAsState()
+    var uiState by remember { mutableStateOf(viewModel.uiState.value) }
+    LaunchedEffect(Unit) { viewModel.uiState.collect { uiState = it } }
 
     Scaffold(
         topBar = {

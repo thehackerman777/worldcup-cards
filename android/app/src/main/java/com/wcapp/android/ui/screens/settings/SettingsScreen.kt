@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
     val viewModel = KoinJavaComponent.get(SettingsViewModel::class.java)
-    val uiState by viewModel.uiState.collectAsState()
+    var uiState by remember { mutableStateOf(viewModel.uiState.value) }
+    LaunchedEffect(Unit) { viewModel.uiState.collect { uiState = it } }
 
     var editingServerUrl by remember { mutableStateOf(false) }
     var tempServerUrl by remember { mutableStateOf(uiState.serverUrl) }
