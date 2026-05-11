@@ -169,18 +169,29 @@ class ApiClient(
         }.body<Exchange>()
     }
 
-    // ── Panini ─────────────────────────────────────────────
+    // ── Panini Local ────────────────────────────────────────
 
-    suspend fun paniniLookup(nickname: String): Result<PaniniUserResponse> = runCatching {
-        httpClient.get("$baseUrl${Constants.paniniUser(nickname)}") {
-            // Public endpoint, no auth needed
+    /** GET /api/v1/panini/local/{nickname} — datos sincronizados */
+    suspend fun paniniLocalLookup(nickname: String): Result<PaniniUserResponse> = runCatching {
+        httpClient.get("$baseUrl${Constants.paniniLocalUser(nickname)}") {
+            // Public endpoint
         }.body<PaniniUserResponse>()
     }
 
-    suspend fun paniniSearch(query: String): Result<PaniniSearchResponse> = runCatching {
-        httpClient.get("$baseUrl${Constants.PANINI_SEARCH}") {
+    /** GET /api/v1/panini/local/search?q= — busca en base local */
+    suspend fun paniniLocalSearch(query: String): Result<PaniniSearchResponse> = runCatching {
+        httpClient.get("$baseUrl${Constants.PANINI_LOCAL_SEARCH}") {
             parameter("q", query)
         }.body<PaniniSearchResponse>()
+    }
+
+    // ── Panini External ──────────────────────────────────────
+
+    /** GET /api/v1/panini/external/{nickname} — API directa Panini */
+    suspend fun paniniExternalLookup(nickname: String): Result<PaniniUserResponse> = runCatching {
+        httpClient.get("$baseUrl${Constants.paniniExternalUser(nickname)}") {
+            // Public endpoint
+        }.body<PaniniUserResponse>()
     }
 
     fun close() {

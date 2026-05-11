@@ -26,11 +26,21 @@ object Constants {
 
     fun exchangeAction(id: String, action: String) = "$API_PREFIX/exchanges/$id/$action"
 
-    // Panini
-    const val PANINI_USER = "$API_PREFIX/panini/user"
-    const val PANINI_SEARCH = "$API_PREFIX/panini/search"
-    const val PANINI_SYNC = "$API_PREFIX/panini/user/sync"
+    // Panini — Local (datos sincronizados en nuestro servidor)
+    const val PANINI_LOCAL = "$API_PREFIX/panini/local"
+    const val PANINI_LOCAL_SYNC = "$API_PREFIX/panini/local/sync"
+    const val PANINI_LOCAL_SEARCH = "$API_PREFIX/panini/local/search"
 
+    /** GET /api/v1/panini/local/{nickname} */
+    fun paniniLocalUser(nickname: String) = "$API_PREFIX/panini/local/$nickname"
+
+    // Panini — External (consulta directa a API pública de Panini)
+    const val PANINI_EXTERNAL = "$API_PREFIX/panini/external"
+
+    /** GET /api/v1/panini/external/{nickname} */
+    fun paniniExternalUser(nickname: String) = "$API_PREFIX/panini/external/$nickname"
+
+    // Compatibilidad (alias de /local/)
     fun paniniUser(nickname: String) = "$API_PREFIX/panini/user/$nickname"
 
     fun cardDetail(id: String) = "$API_PREFIX/cards/$id"

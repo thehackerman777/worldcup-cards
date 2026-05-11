@@ -141,21 +141,31 @@ class ApiService(
     }
 
     // ── Panini ────────────────────────────────────────────
-    suspend fun paniniLookup(nickname: String): PaniniLookupResponse = runCatching {
-        httpClient.get("$baseUrl/api/v1/panini/user/$nickname") {
-            // Public endpoint, no auth needed
+
+    /** Buscar perfil en base local sincronizada */
+    suspend fun paniniLocalLookup(nickname: String): PaniniLookupResponse = runCatching {
+        httpClient.get("$baseUrl/api/v1/panini/local/$nickname") {
+            // Public endpoint
         }.body<PaniniLookupResponse>()
     }
 
+    /** Buscar perfil directamente en API externa de Panini */
+    suspend fun paniniExternalLookup(nickname: String): PaniniLookupResponse = runCatching {
+        httpClient.get("$baseUrl/api/v1/panini/external/$nickname") {
+            // Public endpoint
+        }.body<PaniniLookupResponse>()
+    }
+
+    /** Buscar usuarios locales */
     suspend fun paniniSearch(query: String): PaniniSearchRoot = runCatching {
-        httpClient.get("$baseUrl/api/v1/panini/search") {
+        httpClient.get("$baseUrl/api/v1/panini/local/search") {
             parameter("q", query)
         }.body<PaniniSearchRoot>()
     }
 
+    /** Sincronizar coleccion desde la app */
     suspend fun paniniSync(request: PaniniSyncClientRequest): PaniniSyncClientResponse = runCatching {
-        httpClient.post("$baseUrl/api/v1/panini/user/sync") {
-            auth()
+        httpClient.post("$baseUrl/api/v1/panini/local/sync") {
             setBody(request)
         }.body<PaniniSyncClientResponse>()
     }

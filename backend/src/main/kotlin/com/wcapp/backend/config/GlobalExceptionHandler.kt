@@ -1,6 +1,7 @@
 package com.wcapp.backend.config
 
 import com.wcapp.backend.dto.ErrorResponse
+import com.wcapp.backend.panini.connector.PaniniExternalUnavailableException
 import com.wcapp.backend.panini.service.SyncExpiredException
 import com.wcapp.backend.panini.service.UserNotFoundException
 import jakarta.servlet.http.HttpServletRequest
@@ -76,6 +77,18 @@ class GlobalExceptionHandler {
                 status = HttpStatus.NOT_FOUND.value(),
                 error = "Not Found",
                 message = ex.message ?: "Perfil no encontrado",
+                path = request.requestURI
+            )
+        )
+    }
+
+    @ExceptionHandler(PaniniExternalUnavailableException::class)
+    fun handlePaniniExternalUnavailable(ex: PaniniExternalUnavailableException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+            ErrorResponse(
+                status = HttpStatus.SERVICE_UNAVAILABLE.value(),
+                error = "External Service Unavailable",
+                message = ex.message ?: "API externa de Panini no disponible",
                 path = request.requestURI
             )
         )

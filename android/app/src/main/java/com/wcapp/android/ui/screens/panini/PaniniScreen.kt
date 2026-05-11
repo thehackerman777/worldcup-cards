@@ -37,32 +37,63 @@ fun PaniniScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Search bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Buscar nickname Panini...") },
+                placeholder = { Text("Nickname Panini...") },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
-                trailingIcon = {
-                    if (searchQuery.isNotBlank()) {
-                        IconButton(onClick = {
-                            viewModel.lookupUser(searchQuery)
-                        }) {
-                            Icon(Icons.Default.Send, "Buscar")
-                        }
-                    }
-                },
                 singleLine = true,
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     imeAction = androidx.compose.ui.text.input.ImeAction.Search
                 ),
                 keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                    onSearch = { viewModel.lookupUser(searchQuery) }
+                    onSearch = { /* buttons handle it */ }
                 )
             )
+
+            // Search buttons row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.lookupUser(searchQuery, PaniniSource.LOCAL) },
+                    modifier = Modifier.weight(1f),
+                    enabled = searchQuery.isNotBlank() && !uiState.isLoading
+                ) {
+                    Icon(Icons.Default.Storage, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Local")
+                }
+                OutlinedButton(
+                    onClick = { viewModel.lookupUser(searchQuery, PaniniSource.EXTERNAL) },
+                    modifier = Modifier.weight(1f),
+                    enabled = searchQuery.isNotBlank() && !uiState.isLoading
+                ) {
+                    Icon(Icons.Default.Cloud, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Externo")
+                }
+            }
+
+            // Source badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AssistChip(
+                    onClick = { viewModel.lookupUser(searchQuery, PaniniSource.LOCAL) },
+                    label = { Text("📦 Local: datos sincronizados") }
+                )
+                AssistChip(
+                    onClick = { viewModel.lookupUser(searchQuery, PaniniSource.EXTERNAL) },
+                    label = { Text("☁️ Externo: API de Panini") }
+                )
+            }
 
             // Error
             uiState.error?.let { error ->
@@ -75,7 +106,8 @@ fun PaniniScreen(
                     Text(
                         text = error,
                         modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
@@ -83,19 +115,35 @@ fun PaniniScreen(
             // Loading
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator()
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Consultando ${uiState.source.name.lowercase()}...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 return@Column
             }
 
             // Results
             uiState.userData?.let { data ->
-                // Cache badge
-                if (data.fromCache) {
-                    AssistChip(
-                        onClick = {},
-                        label = { Text("📦 Datos desde caché") },
-                        modifier = Modifier.fillMaxWidth()
+                // Source indicator
+                Surface(
+                    color = if (data.source == PaniniSource.LOCAL)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.tertiaryContainer,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = if (data.source == PaniniSource.LOCAL) "📦 Datos locales"
+                        else "☁️ Datos externos",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
@@ -138,6 +186,13 @@ fun PaniniScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        if (data.fromCache) {
+                            Text(
+                                text = "📦 Servido desde caché",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
 
@@ -209,36 +264,28 @@ fun PaniniScreen(
                 )
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(uiState.searchResults) { result ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
+                        Card(
+                            onClick = { viewModel.lookupUser(result.nickname, PaniniSource.LOCAL) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Row(
                                 modifier = Modifier.padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column {
-                                    Text(
-                                        text = result.nickname,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
+                                    Text(result.nickname, fontWeight = FontWeight.SemiBold)
                                     result.displayName?.let {
-                                        Text(
-                                            text = it,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                        Text(it, style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
-                                    Text(
-                                        text = "${result.completion}%",
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = "${result.duplicateCount} repetidas",
+                                    Text("${result.completion}%", fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary)
+                                    Text("${result.duplicateCount} repetidas",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
@@ -247,27 +294,25 @@ fun PaniniScreen(
             }
 
             // Empty state
-            if (!uiState.isLoading && uiState.userData == null && uiState.searchResults.isEmpty() && uiState.error == null) {
+            if (!uiState.isLoading && uiState.userData == null &&
+                uiState.searchResults.isEmpty() && uiState.error == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.Hub,
-                            null,
-                            modifier = Modifier.size(80.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Icon(Icons.Default.Hub, null, modifier = Modifier.size(80.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(16.dp))
-                        Text(
-                            text = "Panini Digital Sticker Album",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Busca un nickname para ver su colección",
+                        Text("Panini Digital Sticker Album",
+                            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Busca un nickname y elige fuente:",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                        Text("📦 Local → datos sincronizados en nuestro servidor",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("☁️ Externo → consulta directa a API de Panini",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
