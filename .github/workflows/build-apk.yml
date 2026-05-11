@@ -19,6 +19,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: ⚙️ Setup Gradle 8.10.2
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
       - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -26,15 +31,11 @@ jobs:
 
       - name: 🔨 Build Debug APK
         working-directory: ./android
-        run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleDebug --no-daemon
+        run: gradle :app:assembleDebug --no-daemon
 
       - name: 🔨 Build Release APK
         working-directory: ./android
-        run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleRelease --no-daemon
+        run: gradle :app:assembleRelease --no-daemon
 
       - name: 🏷️ Extract version info
         id: version
@@ -67,14 +68,14 @@ jobs:
             # ⚽ World Cup Cards ${{ steps.version.outputs.tag }}
 
             ## 📦 Artefactos
-            - `worldcup-cards-${{ steps.version.outputs.version }}-debug.apk` — APK Debug
-            - `worldcup-cards-${{ steps.version.outputs.version }}-release.apk` — APK Release
+            - APK Debug
+            - APK Release
 
             ## 🚀 Instalación
             1. Descarga el APK deseado
             2. Activa "Instalar apps desconocidas" en Android
             3. Abre el archivo APK
 
-            ## 🔧 Configuración del servidor
-            Una vez instalado, abre Settings → Configura el servidor: `http://18.213.174.229:8080`
+            ## 🔧 Servidor
+            Configura en Settings → `http://18.213.174.229:8080`
           generate_release_notes: false
