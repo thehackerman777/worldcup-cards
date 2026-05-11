@@ -1,14 +1,10 @@
 package com.wcapp.android.ui.screens.auth
-import org.koin.java.KoinJavaComponent
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +19,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wcapp.android.security.SecurePrefs
+import org.koin.java.KoinJavaComponent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,15 +29,64 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
     val viewModel: AuthViewModel = KoinJavaComponent.get(AuthViewModel::class.java)
+    val prefs: SecurePrefs = KoinJavaComponent.get(SecurePrefs::class.java)
     val uiState = viewModel.uiState.value
     val focusManager = LocalFocusManager.current
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var showServerDialog by remember { mutableStateOf(false) }
+    var serverUrl by remember { mutableStateOf(prefs.serverUrl) }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) onLoginSuccess()
+    }
+
+    // ── Server URL Dialog ────────────────────────────────
+    if (showServerDialog) {
+        AlertDialog(
+            onDismissRequest = { showServerDialog = false },
+            icon = { Icon(Icons.Default.Dns, null) },
+            title = { Text("Configurar Servidor") },
+            text = {
+                Column {
+                    Text(
+                        "Ingresa la URL del backend:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = serverUrl,
+                        onValueChange = { serverUrl = it },
+                        label = { Text("URL del servidor") },
+                        placeholder = { Text("http://192.168.1.100:8080") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        leadingIcon = { Icon(Icons.Default.Cloud, null) }
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Ejemplo:\nhttp://10.0.2.2:8080  (emulador)\nhttp://18.213.174.229:8080  (VPS)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    prefs.serverUrl = serverUrl
+                    showServerDialog = false
+                }) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showServerDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     Scaffold { padding ->
@@ -51,6 +98,22 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Gear icon (top-right)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(onClick = { showServerDialog = true }) {
+                    Icon(
+                        Icons.Default.Settings,
+                        "Configurar servidor",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             // Logo / Title
             Text(
                 text = "⚽",
@@ -69,7 +132,22 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Current server badge
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = MaterialTheme.shapes.small
+            ) {
+                Text(
+                    text = "Servidor: ${prefs.serverUrl}",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
 
             // Error message
             uiState.error?.let { error ->
@@ -93,12 +171,10 @@ fun LoginScreen(
                 value = username,
                 onValueChange = { username = it; viewModel.clearError() },
                 label = { Text("Usuario") },
-                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Default.Person, null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next
-                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
                     onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 ),
@@ -112,13 +188,12 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it; viewModel.clearError() },
                 label = { Text("Contraseña") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Default.Lock, null) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             if (passwordVisible) Icons.Default.VisibilityOff
-                            else Icons.Default.Visibility,
-                            contentDescription = if (passwordVisible) "Ocultar" else "Mostrar"
+                            else Icons.Default.Visibility, null
                         )
                     }
                 },
@@ -130,9 +205,7 @@ fun LoginScreen(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
                 ),
-                keyboardActions = KeyboardActions(
-                    onDone = { focusManager.clearFocus() }
-                ),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 enabled = !uiState.isLoading
             )
 
