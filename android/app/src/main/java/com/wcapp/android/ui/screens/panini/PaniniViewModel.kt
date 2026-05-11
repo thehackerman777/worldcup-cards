@@ -59,35 +59,38 @@ class PaniniViewModel(
                 PaniniSource.EXTERNAL -> apiService.paniniExternalLookup(nickname.trim())
             }
 
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    userData = PaniniUserData(
-                        nickname = response.nickname,
-                        duplicates = response.duplicates,
-                        missing = response.missing,
-                        completion = response.completion,
-                        lastSync = response.lastSync,
-                        profileFound = response.profileFound,
-                        fromCache = response.fromCache,
-                        source = source
+            when (result) {
+                is com.wcapp.android.data.remote.ApiResult.Success -> {
+                    val response = result.data
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        userData = PaniniUserData(
+                            nickname = response.nickname,
+                            duplicates = response.duplicates,
+                            missing = response.missing,
+                            completion = response.completion,
+                            lastSync = response.lastSync,
+                            profileFound = response.profileFound,
+                            fromCache = response.fromCache,
+                            source = source
+                        )
                     )
-                )
-            }.onFailure { e ->
-                val msg = e.message ?: "Error de conexión"
-                val userMsg = when {
-                    msg.contains("404") || msg.contains("not found", ignoreCase = true) ->
-                        "Usuario '$nickname' no encontrado en ${source.name.lowercase()}. " +
-                        if (source == PaniniSource.LOCAL) "Sincroniza primero desde la app."
-                        else "Verifica que el nickname exista en Panini."
-                    msg.contains("410") || msg.contains("expir", ignoreCase = true) ->
-                        "Datos de '$nickname' expirados. Sincroniza de nuevo."
-                    msg.contains("503") || msg.contains("unavailable", ignoreCase = true) ||
-                    msg.contains("no se pudo conectar", ignoreCase = true) ->
-                        "Base de datos externa de Panini no disponible. " +
-                        "Verifica que la API esté configurada en el servidor."
-                    else -> msg
                 }
+                is com.wcapp.android.data.remote.ApiResult.Error -> {
+                    val msg = result.message ?: "Error de conexión"
+                    val userMsg = when {
+                        msg.contains("404") || msg.contains("not found", ignoreCase = true) ->
+                            "Usuario '$nickname' no encontrado en ${source.name.lowercase()}. " +
+                            if (source == PaniniSource.LOCAL) "Sincroniza primero desde la app."
+                            else "Verifica que el nickname exista en Panini."
+                        msg.contains("410") || msg.contains("expir", ignoreCase = true) ->
+                            "Datos de '$nickname' expirados. Sincroniza de nuevo."
+                        msg.contains("503") || msg.contains("unavailable", ignoreCase = true) ||
+                        msg.contains("no se pudo conectar", ignoreCase = true) ->
+                            "Base de datos externa de Panini no disponible. " +
+                            "Verifica que la API esté configurada en el servidor."
+                        else -> msg
+                    }
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = userMsg
@@ -102,23 +105,26 @@ class PaniniViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            apiService.paniniSearch(query.trim()).onSuccess {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    searchResults = response.results.map {
-                        PaniniSearchResult(
-                            nickname = it.nickname,
-                            displayName = it.displayName,
-                            completion = it.completion,
-                            duplicateCount = it.duplicateCount
-                        )
-                    }
-                )
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message ?: "Error en búsqueda"
-                )
+            when (val result = apiService.paniniSearch(query.trim())) {
+                is com.wcapp.android.data.remote.ApiResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        searchResults = result.data.results.map {
+                            PaniniSearchResult(
+                                nickname = it.nickname,
+                                displayName = it.displayName,
+                                completion = it.completion,
+                                duplicateCount = it.duplicateCount
+                            )
+                        }
+                    )
+                }
+                is com.wcapp.android.data.remote.ApiResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = result.message
+                    )
+                }
             }
         }
     }
