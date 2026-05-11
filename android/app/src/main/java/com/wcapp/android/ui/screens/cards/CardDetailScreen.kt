@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardDetailScreen(cardId: String, onBack: () -> Unit) {
-    val apiService = remember { org.koin.java.KoinJavaComponent.get(ApiService::class.java) }
+    val apiService: ApiService = org.koin.java.KoinJavaComponent.get(ApiService::class.java)
     var card by remember { mutableStateOf<CardResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
