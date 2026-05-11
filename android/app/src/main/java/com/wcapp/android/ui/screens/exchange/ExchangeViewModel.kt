@@ -3,9 +3,9 @@ package com.wcapp.android.ui.screens.exchange
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.remote.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import kotlinx.coroutines.launch
 
 data class ExchangeUiState(
@@ -21,8 +21,8 @@ class ExchangeViewModel(
     private val apiService: ApiService
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ExchangeUiState())
-    val uiState: StateFlow<ExchangeUiState> = _uiState.asStateFlow()
+    private val _uiState = mutableStateOf(ExchangeUiState())
+    val uiState: State<ExchangeUiState> = _uiState
 
     init {
         loadAll()

@@ -3,18 +3,17 @@ package com.wcapp.android.data.local
 import com.wcapp.android.domain.model.SessionState
 import com.wcapp.android.domain.model.UserInfo
 import com.wcapp.android.security.SecurePrefs
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 
 /**
  * Gestor de sesión reactivo.
- * Expone un StateFlow para que la UI reaccione a cambios de autenticación.
  */
 class SessionManager(
     private val prefs: SecurePrefs
 ) {
-    private val _sessionState = MutableStateFlow(
+    private val _sessionState = mutableStateOf(
         if (prefs.isLoggedIn) {
             SessionState(
                 isLoggedIn = true,
@@ -33,7 +32,7 @@ class SessionManager(
         }
     )
 
-    val sessionState: StateFlow<SessionState> = _sessionState.asStateFlow()
+    val sessionState: State<SessionState> = _sessionState
 
     fun saveSession(token: String, refreshToken: String, userId: String, username: String, email: String, displayName: String?) {
         prefs.saveSession(token, refreshToken, userId, username, email, displayName)

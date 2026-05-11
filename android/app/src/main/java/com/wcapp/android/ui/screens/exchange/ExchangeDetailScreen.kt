@@ -25,8 +25,7 @@ fun ExchangeDetailScreen(
 ) {
     val apiService = KoinJavaComponent.get(ApiService::class.java)
     val viewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
-    var uiState by remember { mutableStateOf(viewModel.uiState.value) }
-    LaunchedEffect(Unit) { viewModel.uiState.collect { uiState = it } }
+    val uiState by viewModel.uiState
     val scope = rememberCoroutineScope()
 
     var exchange by remember { mutableStateOf<ExchangeResponse?>(null) }

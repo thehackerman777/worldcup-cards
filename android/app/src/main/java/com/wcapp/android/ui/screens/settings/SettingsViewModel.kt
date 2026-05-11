@@ -2,9 +2,9 @@ package com.wcapp.android.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import com.wcapp.android.data.local.SessionManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 
 data class SettingsUiState(
     val serverUrl: String = "",
@@ -17,8 +17,8 @@ class SettingsViewModel(
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState())
-    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+    private val _uiState = mutableStateOf(SettingsUiState())
+    val uiState: State<SettingsUiState> = _uiState
 
     init {
         val session = sessionManager.sessionState.value

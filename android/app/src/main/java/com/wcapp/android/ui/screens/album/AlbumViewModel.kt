@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.remote.AlbumResponse
 import com.wcapp.android.data.remote.ApiService
 import com.wcapp.android.data.remote.UserCardResponse
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import kotlinx.coroutines.launch
 
 data class AlbumUiState(
@@ -22,8 +22,8 @@ class AlbumViewModel(
     private val apiService: ApiService
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AlbumUiState())
-    val uiState: StateFlow<AlbumUiState> = _uiState.asStateFlow()
+    private val _uiState = mutableStateOf(AlbumUiState())
+    val uiState: State<AlbumUiState> = _uiState
 
     init {
         loadAlbum()

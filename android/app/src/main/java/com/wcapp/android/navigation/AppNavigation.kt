@@ -2,28 +2,7 @@ package com.wcapp.android.navigation
 
 import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -66,8 +45,7 @@ object Routes {
 fun AppNavigation() {
     val navController = rememberNavController()
     val sessionManager: SessionManager = KoinJavaComponent.get(SessionManager::class.java)
-    val sessionState = sessionManager.sessionState.value
-    LaunchedEffect(Unit) { sessionManager.sessionState.collect { s -> } }
+    val sessionState by sessionManager.sessionState
 
     val startDestination = if (sessionState.isLoggedIn) Routes.HOME else Routes.LOGIN
 

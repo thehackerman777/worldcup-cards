@@ -19,8 +19,7 @@ fun CreateExchangeScreen(
     onBack: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(ExchangeViewModel::class.java)
-    var uiState by remember { mutableStateOf(viewModel.uiState.value) }
-    LaunchedEffect(Unit) { viewModel.uiState.collect { uiState = it } }
+    val uiState by viewModel.uiState
 
     var message by remember { mutableStateOf("") }
     // Simplified: in a real app you'd select cards from a list

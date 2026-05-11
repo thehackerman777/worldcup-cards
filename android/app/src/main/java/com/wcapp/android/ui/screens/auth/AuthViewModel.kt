@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wcapp.android.data.local.SessionManager
 import com.wcapp.android.data.remote.ApiService
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import kotlinx.coroutines.launch
 
 data class AuthUiState(
@@ -20,8 +20,8 @@ class AuthViewModel(
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AuthUiState())
-    val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+    private val _uiState = mutableStateOf(AuthUiState())
+    val uiState: State<AuthUiState> = _uiState
 
     fun login(username: String, password: String) {
         viewModelScope.launch {

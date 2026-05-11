@@ -24,8 +24,7 @@ fun CardsScreen(
     onBack: () -> Unit
 ) {
     val viewModel = KoinJavaComponent.get(CardsViewModel::class.java)
-    var uiState by remember { mutableStateOf(viewModel.uiState.value) }
-    LaunchedEffect(Unit) { viewModel.uiState.collect { uiState = it } }
+    val uiState by viewModel.uiState
 
     Scaffold(
         topBar = {
